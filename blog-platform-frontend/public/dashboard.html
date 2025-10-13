@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản trị Blog</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="dashboard-wrapper">
+        <header>
+            <h1>Bảng điều khiển</h1>
+            <div class="user-info">
+                <span>Xin chào, <strong id="user-email"></strong>!</span>
+                <button id="btn-logout">Đăng xuất</button>
+            </div>
+        </header>
+
+        <main id="dashboard-container">
+            <div id="loading">Đang tải dữ liệu...</div>
+
+            <!-- Form tạo blog (hiện khi user chưa có blog) -->
+            <div id="create-blog-container" class="hidden card">
+                <h3>Bạn chưa có blog. Hãy tạo một cái!</h3>
+                <input type="text" id="blog-title" placeholder="Tên blog của bạn">
+                <input type="text" id="blog-subdomain" placeholder="Tên miền phụ (vd: my-blog)">
+                <button id="btn-create-blog">Tạo Blog</button>
+            </div>
+
+            <!-- Khu vực quản lý blog (hiện khi user đã có blog) -->
+            <div id="manage-blog-container" class="hidden card">
+                <h3 id="manage-blog-title"></h3>
+                <p>Truy cập blog của bạn tại: <a id="blog-url" href="#" target="_blank"></a></p>
+
+                <div class="post-creator">
+                    <h4>Tạo bài viết mới</h4>
+                    <input type="text" id="post-title" placeholder="Tiêu đề bài viết">
+                    <textarea id="post-content" placeholder="Nội dung bài viết..."></textarea>
+                    <button id="btn-create-post">Đăng bài</button>
+                </div>
+
+                <div class="posts-list-wrapper">
+                    <h4>Các bài viết đã đăng</h4>
+                    <div id="posts-list"></div>
+                </div>
+            </div>
+
+            <!-- ======================================= -->
+            <!-- === KHU VỰC MỚI ĐƯỢC THÊM VÀO ĐÂY === -->
+            <!-- ======================================= -->
+            <div class="card advanced-settings">
+                <h4>Cài đặt Nâng cao</h4>
+                <p>Hành động này không thể hoàn tác. Tất cả blog và bài viết của bạn sẽ bị xóa vĩnh viễn.</p>
+                <button id="btn-delete-account" class="btn-danger">Xóa tài khoản của tôi</button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <!-- File JavaScript của dashboard -->
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
