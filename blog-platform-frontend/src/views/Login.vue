@@ -1,36 +1,48 @@
 <template>
-  <div class="form-container">
-    <!-- Form Đăng nhập -->
+  <div class="auth-card ui-card elevated p-4 p-md-5">
+    <header class="mb-3 text-center">
+      <div class="d-inline-flex align-items-center justify-content-center mb-2">
+        <span class="brand-dot"></span>
+        <span class="fw-bold">Bloggo</span>
+      </div>
+      <h1 class="auth-title h3 mb-1">Chào mừng trở lại</h1>
+      <p class="auth-subtitle muted">Đăng nhập để tiếp tục quản lý blog của bạn</p>
+    </header>
+
     <div v-if="!showResetForm">
-      <h1>Đăng nhập</h1>
-      <p v-if="errorMessage" class="message">{{ errorMessage }}</p>
-      <form @submit.prevent="handleLogin">
-        <input v-model="email" type="email" placeholder="Email" required>
-        <input v-model="password" type="password" placeholder="Mật khẩu" required>
-        <button type="submit" :disabled="isSubmitting">
+      <p v-if="errorMessage" class="alert alert-danger small">{{ errorMessage }}</p>
+      <form @submit.prevent="handleLogin" class="d-grid gap-3">
+        <div>
+          <label for="email" class="ui-label">Email</label>
+          <input v-model="email" type="email" class="ui-input" id="email" required>
+        </div>
+        <div>
+          <label for="password" class="ui-label">Mật khẩu</label>
+          <input v-model="password" type="password" class="ui-input" id="password" required>
+        </div>
+        <button type="submit" class="ui-btn primary w-100" :disabled="isSubmitting">
           {{ isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập' }}
         </button>
       </form>
-      <p class="links">
-        <a href="#" @click.prevent="showResetForm = true">Quên mật khẩu?</a>
-      </p>
-      <p>Chưa có tài khoản? <router-link to="/signup">Đăng ký ngay</router-link></p>
+      <div class="text-center mt-3">
+        <a href="#" class="link" @click.prevent="showResetForm = true">Quên mật khẩu?</a>
+      </div>
+      <hr class="my-4">
+      <p class="text-center mb-0">Chưa có tài khoản? <router-link class="link" to="/signup">Đăng ký ngay</router-link></p>
     </div>
 
-    <!-- Form Khôi phục Mật khẩu -->
     <div v-else>
-      <h1>Khôi phục Mật khẩu</h1>
-      <p v-if="message" class="message" :style="{ color: isError ? 'red' : 'green' }">{{ message }}</p>
-      <form @submit.prevent="handlePasswordReset">
-        <p>Nhập email của bạn và chúng tôi sẽ gửi một link để khôi phục mật khẩu.</p>
-        <input v-model="email" type="email" placeholder="Email đã đăng ký" required>
-        <button type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Đang gửi...' : 'Gửi link Khôi phục' }}
-        </button>
+      <h2 class="h4">Khôi phục mật khẩu</h2>
+      <p class="muted">Nhập email của bạn để nhận liên kết đặt lại mật khẩu.</p>
+      <form @submit.prevent="handlePasswordReset" class="d-grid gap-3">
+        <div>
+          <label class="ui-label" for="reset-email">Email</label>
+          <input id="reset-email" v-model="email" type="email" class="ui-input" required>
+        </div>
+        <button class="ui-btn primary w-100" :disabled="isSubmitting">{{ isSubmitting ? 'Đang gửi...' : 'Gửi liên kết' }}</button>
       </form>
-      <p class="links">
-        <a href="#" @click.prevent="showResetForm = false; message = ''">Quay lại Đăng nhập</a>
-      </p>
+      <p class="mt-3 small" :style="{ color: isError ? 'red' : 'green' }">{{ message }}</p>
+      <button class="ui-btn ghost w-100 mt-2" @click="showResetForm=false">Quay lại đăng nhập</button>
     </div>
   </div>
 </template>
@@ -101,10 +113,4 @@ const handlePasswordReset = async () => {
 </script>
 
 <style scoped>
-  /* CSS cho component này */
-  .links {
-    margin-top: 15px;
-    font-size: 0.9em;
-    text-align: center;
-  }
 </style>

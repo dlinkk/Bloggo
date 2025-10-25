@@ -1,0 +1,101 @@
+<template>
+  <nav class="navbar navbar-expand-lg navbar-light app-navbar sticky-top" :class="{ 'border-bottom': true }">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#" @click.prevent="goDashboard">
+        <span class="brand-dot"></span>
+        <strong>Bloggo</strong>
+      </a>
+
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <button class="ui-btn ghost" @click="toggleTheme" :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <span v-if="isDark">🌙</span>
+          <span v-else>☀️</span>
+        </button>
+
+        <!-- User menu -->
+        <div class="user-menu" ref="menuRef">
+          <button class="ui-btn ghost" @click="toggleMenu" :aria-expanded="open" aria-haspopup="menu">
+            <span class="d-none d-sm-inline">{{ userEmail || 'Tài khoản' }}</span>
+            <span class="d-inline d-sm-none">Tài khoản</span>
+            <span> ▾</span>
+          </button>
+          <div v-if="open" class="menu-pop ui-card" role="menu">
+            <button class="menu-item" role="menuitem" @click="handleLogout">Đăng xuất</button>
+            <button class="menu-item danger" role="menuitem" @click="handleDeleteAccount" :disabled="isDeleting">
+              {{ isDeleting ? 'Đang xóa...' : 'Xóa tài khoản' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</template>
+
+<script setup>
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { auth } from '../services/firebase'
+import api from '../services/api'
+
+const router = useRouter()
+const userEmail = computed(() => auth.currentUser?.email || '')
+
+const isDark = ref(false)
+const open = ref(false)
+const isDeleting = ref(false)
+const menuRef = ref(null)
+
+onMounted(() => {
+  isDark.value = document.body.classList.contains('theme-dark')
+})
+
+const toggleTheme = () => {
+  document.body.classList.toggle('theme-dark')
+  isDark.value = document.body.classList.contains('theme-dark')
+}
+
+const handleLogout = async () => {
+  try {
+    await auth.signOut()
+    router.push('/login')
+  } catch (e) { console.error(e) }
+}
+
+const goDashboard = () => router.push('/dashboard')
+
+// Dropdown helpers
+const toggleMenu = () => { open.value = !open.value }
+const onClickOutside = (e) => {
+  if (!menuRef.value) return
+  if (!menuRef.value.contains(e.target)) open.value = false
+}
+onMounted(() => document.addEventListener('click', onClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
+
+// Delete account
+const handleDeleteAccount = async () => {
+  const confirmation = prompt("Hành động này CỰC KỲ NGUY HIỂM và không thể hoàn tác. Gõ 'DELETE' để xác nhận xóa vĩnh viễn tài khoản của bạn.")
+  if (confirmation !== 'DELETE') return
+  isDeleting.value = true
+  try {
+    const response = await api.delete('/api/users/me')
+    alert(response.data?.message || 'Tài khoản đã được xóa thành công.')
+    await auth.signOut()
+  } catch (error) {
+    alert('Đã xảy ra lỗi khi xóa tài khoản: ' + (error.response?.data?.message || error.message))
+  } finally {
+    isDeleting.value = false
+    open.value = false
+  }
+}
+</script>
+
+<style scoped>
+.navbar-brand strong { letter-spacing: -0.02em; }
+.user-menu { position: relative; }
+.menu-pop { position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 6px; z-index: 1000; }
+.menu-item { display: block; width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 8px; color: var(--text); }
+.menu-item:hover { background: rgba(2,6,23,.04); }
+.menu-item.danger { color: #dc2626; }
+.menu-item.danger:hover { background: rgba(220,38,38,.08); }
+</style>

@@ -1,24 +1,18 @@
 <template>
-  <div class="dashboard-wrapper">
-    <header>
-      <h1>Bảng điều khiển</h1>
-      <div class="user-info">
-        <span>Xin chào, <strong>{{ userEmail }}</strong>!</span>
-        <button @click="handleLogout">Đăng xuất</button>
-      </div>
-    </header>
-
+  <!-- Main Content -->
+  <div class="container">
     <main>
-  <div v-if="isLoading" class="card">Đang tải dữ liệu...</div>
-  
-  <div v-else>
-    <!-- `blog` có giá trị (không phải null) thì mới render ManageBlog -->
-    <ManageBlog v-if="blog" :blog-data="blog" />
-    
-    <!-- Ngược lại, render CreateBlogForm -->
-    <CreateBlogForm v-else @blog-created="fetchBlogData" />
-  </div>
-</main>
+      <div v-if="isLoading" class="d-flex justify-content-center mt-5">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      
+      <div v-else>
+        <ManageBlog v-if="blog" :blog-data="blog" @post-created="fetchBlogData" />
+        <CreateBlogForm v-else @blog-created="fetchBlogData" />
+      </div>
+    </main>
   </div>
 </template>
 
@@ -31,41 +25,40 @@ import CreateBlogForm from '../components/CreateBlogForm.vue';
 import ManageBlog from '../components/ManageBlog.vue';
 
 const router = useRouter();
-// Dùng computed property để đảm bảo email luôn được cập nhật
 const userEmail = computed(() => auth.currentUser?.email || ''); 
-
 const isLoading = ref(true);
 const blog = ref(null);
 
 const fetchBlogData = async () => {
   isLoading.value = true;
+  console.log('--- [Dashboard] Starting to fetch blog data... ---');
   try {
     const response = await api.get('/api/my-blog');
-    blog.value = response.data; // Gán dữ liệu nếu có blog
+    blog.value = response.data;
+    console.log('[Dashboard] Successfully fetched blog data:', blog.value);
   } catch (error) {
+    console.error('[Dashboard] Error fetching blog data:', error);
     if (error.response && error.response.status === 404) {
-      blog.value = null; // Rất quan trọng: Set lại là null nếu không có blog
+      blog.value = null;
+      console.log('[Dashboard] User does not have a blog yet (404). Setting blog to null.');
     } else {
-      console.error('Lỗi khi tải dữ liệu blog:', error);
-      // Có thể hiển thị thông báo lỗi ở đây
+      console.log('[Dashboard] A non-404 error occurred.');
     }
   } finally {
-    isLoading.value = false; // Luôn luôn set lại loading = false
+    isLoading.value = false;
+    console.log('--- [Dashboard] Finished fetching. isLoading is now false. ---');
   }
 };
 
-// onMounted sẽ chạy MỘT LẦN khi component được tạo ra
 onMounted(fetchBlogData);
 
+// Logout đã có trên NavBar; giữ lại fallback nếu cần
 const handleLogout = async () => {
-  await auth.signOut();
-  // Không cần router.push vì router.beforeEach sẽ tự xử lý
+  try { await auth.signOut(); router.push('/login'); } catch (error) { console.error("Error during logout:", error); }
 };
+
+// Xóa tài khoản/đăng xuất đã được gom vào menu trên NavBar
 </script>
 
-<style>
-  /* Thêm CSS cho dashboard tại đây hoặc import từ file ngoài */
-  .dashboard-wrapper { max-width: 900px; margin: auto; }
-  header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
-  /* ... */
+<style scoped>
 </style>

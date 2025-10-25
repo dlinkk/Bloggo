@@ -1,19 +1,40 @@
 <template>
-  <div class="form-container">
-    <h1>Tạo tài khoản</h1>
-    <p v-if="message" class="message" :style="{ color: isError ? 'red' : 'green' }">{{ message }}</p>
-    <form @submit.prevent="handleSignup">
-      <input v-model="email" type="email" placeholder="Email" required>
-      <input v-model="displayName" type="text" placeholder="Tên hiển thị (duy nhất)" required>
-      <input v-model="password" type="password" placeholder="Mật khẩu (ít nhất 6 ký tự)" required>
-      <input v-model="passwordConfirm" type="password" placeholder="Xác nhận mật khẩu" required>
-      <!-- Vô hiệu hóa nút khi đang gửi để tránh nhấn nhiều lần -->
-      <button type="submit" :disabled="isSubmitting">
+  <div class="auth-card ui-card elevated p-4 p-md-5">
+    <header class="mb-3 text-center">
+      <div class="d-inline-flex align-items-center justify-content-center mb-2">
+        <span class="brand-dot"></span>
+        <span class="fw-bold">Bloggo</span>
+      </div>
+      <h1 class="auth-title h3 mb-1">Tạo tài khoản</h1>
+      <p class="auth-subtitle muted">Bắt đầu xây dựng blog của riêng bạn chỉ trong vài phút</p>
+    </header>
+
+    <p v-if="message" class="small" :style="{ color: isError ? 'red' : 'green' }">{{ message }}</p>
+    <form @submit.prevent="handleSignup" class="d-grid gap-3">
+      <div>
+        <label class="ui-label" for="email">Email</label>
+        <input id="email" v-model="email" type="email" class="ui-input" placeholder="your@email.com" required>
+      </div>
+      <div>
+        <label class="ui-label" for="displayName">Tên hiển thị</label>
+        <input id="displayName" v-model="displayName" type="text" class="ui-input" placeholder="duy nhất trên nền tảng" required>
+        <div class="ui-help">Tên này sẽ hiển thị công khai và cần là duy nhất.</div>
+      </div>
+      <div>
+        <label class="ui-label" for="password">Mật khẩu</label>
+        <input id="password" v-model="password" type="password" class="ui-input" placeholder="Ít nhất 6 ký tự" required>
+      </div>
+      <div>
+        <label class="ui-label" for="passwordConfirm">Xác nhận mật khẩu</label>
+        <input id="passwordConfirm" v-model="passwordConfirm" type="password" class="ui-input" required>
+      </div>
+      <button type="submit" class="ui-btn primary w-100" :disabled="isSubmitting">
         {{ isSubmitting ? 'Đang xử lý...' : 'Đăng ký' }}
       </button>
     </form>
-    <p>Đã có tài khoản? <router-link to="/login">Đăng nhập</router-link></p>
+    <p class="text-center mt-3 mb-0">Đã có tài khoản? <router-link class="link" to="/login">Đăng nhập</router-link></p>
   </div>
+  
 </template>
 
 <script setup>
@@ -87,5 +108,4 @@ const handleSignup = async () => {
 </script>
 
 <style scoped>
-  /* Bạn có thể thêm CSS riêng cho component này tại đây */
 </style>

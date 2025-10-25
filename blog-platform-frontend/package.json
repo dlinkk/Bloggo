@@ -9,6 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-image": "^3.8.0",
+    "@tiptap/extension-highlight": "^3.8.0",
+    "@tiptap/extension-link": "^3.8.0",
+    "@tiptap/extension-text-align": "^3.8.0",
+    "@tiptap/extension-underline": "^3.8.0",
+    "@tiptap/extension-text-style": "^3.8.0",
+    "@tiptap/starter-kit": "^3.8.0",
+    "@tiptap/vue-3": "^3.8.0",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "axios": "^1.12.2",
     "firebase": "^12.4.0",
