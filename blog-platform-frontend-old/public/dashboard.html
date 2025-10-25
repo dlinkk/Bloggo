@@ -35,6 +35,10 @@
 
                 <div class="post-creator">
                     <h4>Tạo bài viết mới</h4>
+                    <!-- Thêm input để upload media và trạng thái upload -->
+                    <input type="file" id="media-upload" accept="image/*,video/*">
+                    <div id="upload-status"></div>
+
                     <input type="text" id="post-title" placeholder="Tiêu đề bài viết">
                     <textarea id="post-content" placeholder="Nội dung bài viết..."></textarea>
                     <button id="btn-create-post">Đăng bài</button>
@@ -61,6 +65,9 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <!-- !!! THÊM THƯ VIỆN SHOWDOWN VÀO ĐÂY !!! -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
 
     <!-- File JavaScript của dashboard -->
     <script src="dashboard.js"></script>

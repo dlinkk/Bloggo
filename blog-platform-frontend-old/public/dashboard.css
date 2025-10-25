@@ -104,3 +104,11 @@ textarea {
 .btn-danger:hover {
     background-color: #c82333;
 }
+
+/* Thêm CSS cho ảnh trong nội dung bài viết (preview) */
+.post-preview-content img {
+    max-width: 100%; /* Đảm bảo ảnh không bị tràn ra ngoài */
+    height: auto;
+    border-radius: 4px;
+    margin-top: 10px;
+}

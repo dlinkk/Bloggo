@@ -53,6 +53,9 @@ function initializeDashboard(user) {
     const createPostButton = document.getElementById('btn-create-post');
     const postsListDiv = document.getElementById('posts-list');
 
+    // Khởi tạo showdown converter một lần (showdown đã được load qua CDN)
+    const converter = new showdown.Converter();
+
     // !!! LẤY ELEMENT MỚI CHO NÚT XÓA !!!
     const deleteAccountButton = document.getElementById('btn-delete-account');
 
@@ -82,7 +85,11 @@ function initializeDashboard(user) {
             posts.forEach(post => {
                 const postEl = document.createElement('div');
                 postEl.className = 'post-item';
-                postEl.innerHTML = `<h4>${post.title}</h4><p>${post.content}</p>`;
+
+                // Chuyển đổi nội dung từ Markdown sang HTML
+                const htmlContent = converter.makeHtml(post.content || '');
+
+                postEl.innerHTML = `<h4>${post.title}</h4><div class="post-preview-content">${htmlContent}</div>`;
                 postsListDiv.appendChild(postEl);
             });
         } catch (error) {
@@ -177,6 +184,50 @@ function initializeDashboard(user) {
             deleteAccountButton.disabled = false;
         }
     });
+
+    // --- XỬ LÝ UPLOAD MEDIA QUA SIGNED URL ---
+    const mediaUploadInput = document.getElementById('media-upload');
+    const uploadStatusDiv = document.getElementById('upload-status');
+    // postContentInput đã được định nghĩa phía trên
+    if (mediaUploadInput) {
+        mediaUploadInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            uploadStatusDiv.textContent = 'Đang chuẩn bị upload...';
+
+            try {
+                // 1. Xin Signed URL từ backend
+                const { signedUrl, publicUrl } = await fetchWithAuth('/api/generate-upload-url', {
+                    method: 'POST',
+                    body: JSON.stringify({ filename: file.name, contentType: file.type }),
+                });
+
+                // 2. Tải file trực tiếp lên Cloud Storage
+                uploadStatusDiv.textContent = 'Đang tải lên...';
+                await fetch(signedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type },
+                    body: file,
+                });
+
+                // 3. Chèn link vào textarea
+                uploadStatusDiv.textContent = 'Tải lên thành công!';
+                const markdown = file.type.startsWith('image/')
+                    ? `\n![${file.name}](${publicUrl})\n`
+                    : `\n[Xem video: ${file.name}](${publicUrl})\n`;
+
+                postContentInput.value += markdown;
+
+                // Xóa file đã chọn để có thể upload file khác
+                mediaUploadInput.value = '';
+
+            } catch (error) {
+                uploadStatusDiv.textContent = 'Lỗi tải lên: ' + (error.message || error);
+                console.error(error);
+            }
+        });
+    }
 
     // --- CHẠY LẦN ĐẦU ---
     renderDashboardUI();
