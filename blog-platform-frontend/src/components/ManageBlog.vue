@@ -1,31 +1,22 @@
 <template>
   <div>
-    <div class="manager-header">
-      <div class="header-row">
-        <div class="header-info">
-          <h3 class="mb-1" v-if="props.blogData">Quản lý blog: {{ props.blogData.title }}</h3>
-          <p class="mb-0" v-if="blogUrl !== '#'">
-            Truy cập blog của bạn tại: <a :href="blogUrl" target="_blank" rel="noopener noreferrer">{{ blogUrl }}</a>
-          </p>
-        </div>
-        <div class="header-actions" v-if="blogUrl !== '#'">
-          <a :href="blogUrl" target="_blank" rel="noopener noreferrer" class="ui-btn primary">Mở blog</a>
-        </div>
-      </div>
-    </div>
+    <!-- Header section removed per request -->
 
     <div class="manager-stack">
-      <!-- Soạn bài viết -->
-      <section class="ui-card elevated section-card p-3 p-md-4">
-        <h4 class="section-title">Tạo bài viết mới</h4>
+      <!-- Soạn bài viết (ẩn mặc định, chỉ hiện khi bấm BÀI ĐĂNG MỚI) -->
+      <section v-if="createVisible" class="ui-card elevated section-card p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h4 class="section-title mb-0">Tạo bài viết mới</h4>
+          <button class="ui-btn ghost" @click="closeComposer">Đóng</button>
+        </div>
         <p v-if="uploadMessage" :style="{ color: uploadError ? 'red' : 'green' }">{{ uploadMessage }}</p>
 
         <label for="media-upload-btn" class="file-upload-label">Thêm Ảnh</label>
         <input type="file" @change="handleFileSelect" accept="image/*" ref="fileInputRef" id="media-upload-btn" style="display: none;">
 
-        <input v-model="post.title" type="text" placeholder="Tiêu đề bài viết" class="ui-input title-input">
+        <input v-model="post.title" type="text" placeholder="Tiêu đề bài viết" class="ui-input title-input" ref="titleInputRef">
 
-  <Editor v-model="post.content" ref="editorRef" @image-drop="handleUploadFile" />
+        <Editor v-model="post.content" ref="editorRef" @image-drop="handleUploadFile" />
 
         <button @click="handleCreatePost" :disabled="isSubmittingPost" class="ui-btn primary submit-post-btn">
           {{ isSubmittingPost ? 'Đang đăng...' : 'Đăng bài' }}
@@ -39,10 +30,10 @@
         <div class="list-controls d-flex flex-wrap gap-2 mb-3">
           <input v-model="searchQuery" type="text" class="ui-input" placeholder="Tìm theo tiêu đề hoặc nội dung..." style="flex:1; min-width: 220px;" />
           <select v-model="sortKey" class="ui-input" style="width:200px">
-            <option value="title-asc">Tiêu đề A → Z</option>
-            <option value="title-desc">Tiêu đề Z → A</option>
             <option value="newest" v-if="hasCreatedAt">Mới nhất</option>
             <option value="oldest" v-if="hasCreatedAt">Cũ nhất</option>
+            <option value="title-asc">Tiêu đề A → Z</option>
+            <option value="title-desc">Tiêu đề Z → A</option>
           </select>
         </div>
 
@@ -96,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import api from '../services/api';
 import Editor from './Editor.vue'; // Import component Editor
 
@@ -104,6 +95,7 @@ console.log('--- [ManageBlog] Component Setup ---');
 
 const props = defineProps({
   blogData: { type: Object, required: true },
+  openComposerSignal: { type: Number, default: 0 },
 });
 
 // State
@@ -112,13 +104,15 @@ const isSubmittingPost = ref(false);
 const uploadMessage = ref('');
 const uploadError = ref(false);
 const fileInputRef = ref(null);
+const titleInputRef = ref(null);
 const posts = ref([]);
 const isLoadingPosts = ref(true);
 const deletingIds = reactive(new Set());
+const createVisible = ref(false);
 
 // List controls
 const searchQuery = ref('');
-const sortKey = ref('title-asc');
+const sortKey = ref('newest');
 const pageSize = 10;
 const visibleCount = ref(pageSize);
 
@@ -134,9 +128,28 @@ const filteredPosts = computed(() => {
   });
   // sort
   switch (sortKey.value) {
-    case 'title-desc': arr.sort((a,b)=> (a.title||'').localeCompare(b.title||'')); arr.reverse(); break;
-    case 'newest': if (hasCreatedAt.value) arr.sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt)); break;
-    case 'oldest': if (hasCreatedAt.value) arr.sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt)); break;
+    case 'title-desc':
+      arr.sort((a,b)=> (a.title||'').localeCompare(b.title||''));
+      arr.reverse();
+      break;
+    case 'newest':
+      if (hasCreatedAt.value) {
+        const ts = (x) => {
+          const n = new Date(x).getTime();
+          return Number.isFinite(n) ? n : 0;
+        };
+        arr.sort((a,b)=> ts(b.createdAt) - ts(a.createdAt));
+      }
+      break;
+    case 'oldest':
+      if (hasCreatedAt.value) {
+        const ts = (x) => {
+          const n = new Date(x).getTime();
+          return Number.isFinite(n) ? n : 0;
+        };
+        arr.sort((a,b)=> ts(a.createdAt) - ts(b.createdAt));
+      }
+      break;
     default: arr.sort((a,b)=> (a.title||'').localeCompare(b.title||''));
   }
   return arr;
@@ -158,6 +171,13 @@ const fetchPosts = async () => {
   try {
     const response = await api.get(`/api/posts?blogId=${props.blogData.id}`);
     posts.value = response.data || [];
+    // Default sorting: newest first when timestamp is available
+    if (hasCreatedAt.value) {
+      sortKey.value = 'newest';
+    } else if (sortKey.value === 'newest' || sortKey.value === 'oldest') {
+      // Fallback to title sort if createdAt is missing
+      sortKey.value = 'title-asc';
+    }
   } catch (error) {
     console.error("[ManageBlog] Error fetching posts:", error);
   } finally {
@@ -233,7 +253,34 @@ const handleCreatePost = async () => {
 // Hàm này không cần thiết nữa vì nội dung đã là HTML
 // const renderMarkdown = (content) => { ... };
 
-onMounted(fetchPosts);
+onMounted(() => {
+  fetchPosts();
+  // Lắng nghe sự kiện mở nhanh vùng soạn bài từ Sidebar
+  window.addEventListener('open-new-post', handleOpenNewPost);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('open-new-post', handleOpenNewPost);
+});
+
+const handleOpenNewPost = () => {
+  createVisible.value = true;
+  nextTick(() => {
+    try {
+      titleInputRef.value?.focus();
+      titleInputRef.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch {}
+  });
+};
+
+const closeComposer = () => {
+  createVisible.value = false;
+};
+
+// Mở composer khi Dashboard phát signal
+watch(() => props.openComposerSignal, () => {
+  handleOpenNewPost();
+});
 
 // Helpers
 const getExcerpt = (html, max = 120) => {

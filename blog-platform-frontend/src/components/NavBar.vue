@@ -1,15 +1,17 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light app-navbar sticky-top" :class="{ 'border-bottom': true }">
     <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="#" @click.prevent="goDashboard">
-        <span class="brand-dot"></span>
-        <strong>Bloggo</strong>
-      </a>
+      <div class="d-flex align-items-center gap-2">
+        <button class="ui-btn ghost sidebar-top-toggle" type="button" @click="toggleSidebar" title="Thu gọn / Mở sidebar">☰</button>
+        <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="#" @click.prevent="goDashboard">
+          <span class="brand-dot"></span>
+          <strong>Bloggo</strong>
+        </a>
+      </div>
 
       <div class="d-flex align-items-center gap-2 ms-auto">
         <button class="ui-btn ghost" @click="toggleTheme" :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'">
-          <span v-if="isDark">🌙</span>
-          <span v-else>☀️</span>
+          <Icon :name="isDark ? 'moon' : 'sun'" :size="18" />
         </button>
 
         <!-- User menu -->
@@ -32,6 +34,7 @@
 </template>
 
 <script setup>
+import Icon from './Icon.vue'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '../services/firebase'
@@ -50,8 +53,9 @@ onMounted(() => {
 })
 
 const toggleTheme = () => {
-  document.body.classList.toggle('theme-dark')
-  isDark.value = document.body.classList.contains('theme-dark')
+  const nowDark = document.body.classList.toggle('theme-dark')
+  isDark.value = nowDark
+  try { localStorage.setItem('theme', nowDark ? 'dark' : 'light') } catch {}
 }
 
 const handleLogout = async () => {
@@ -62,6 +66,11 @@ const handleLogout = async () => {
 }
 
 const goDashboard = () => router.push('/dashboard')
+
+// Toggle sidebar via global event so Dashboard can react
+const toggleSidebar = () => {
+  window.dispatchEvent(new CustomEvent('toggle-sidebar'))
+}
 
 // Dropdown helpers
 const toggleMenu = () => { open.value = !open.value }

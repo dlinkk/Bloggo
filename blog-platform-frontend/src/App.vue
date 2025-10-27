@@ -16,9 +16,8 @@ import NavBar from './components/NavBar.vue'
 const route = useRoute()
 const showNav = computed(() => !['Login', 'Signup'].includes(route.name))
 
-// Respect OS theme on first load
+// Theme is initialized in main.js from localStorage; default is light
 onMounted(() => {
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-  if (prefersDark) document.body.classList.add('theme-dark')
+  // no-op: keep hook for potential future side effects
 })
 </script>
