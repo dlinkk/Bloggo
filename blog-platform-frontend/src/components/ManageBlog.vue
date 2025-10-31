@@ -60,8 +60,8 @@
                 </div>
                 <div class="post-excerpt muted">{{ getExcerpt(p.content, 200) }}</div>
                 <div class="post-actions d-flex gap-2 mt-2">
-                  <button class="ui-btn ghost small" @click="openPreview(p)">Xem</button>
-                  <button class="ui-btn ghost small" @click="deletePost(p)" :disabled="deletingIds.has(p.id)">{{ deletingIds.has(p.id) ? 'Đang xóa...' : 'Xóa' }}</button>
+                  <button class="ui-btn ghost small accent" @click="openPreview(p)">Xem</button>
+                  <button class="ui-btn ghost small danger" @click="deletePost(p)" :disabled="deletingIds.has(p.id)">{{ deletingIds.has(p.id) ? 'Đang xóa...' : 'Xóa' }}</button>
                 </div>
               </div>
               <img v-if="getThumbnail(p.content)" class="post-thumb" :src="getThumbnail(p.content)" alt="thumbnail" loading="lazy" />

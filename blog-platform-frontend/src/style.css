@@ -19,20 +19,26 @@
 
 .theme-dark {
   /* True black dark mode for easy reading */
-  --brand: #b69cff;
   /* pastel violet kept */
+  /* app background */
+  /* card surfaces */
+  /* subtle separators */
+  --brand: #b69cff;
+  /* keep pastel violet */
   --brand-600: #a78bfa;
   --brand-700: #8b5cf6;
-  --text: #f5f7fa;
-  --muted: #a1a7b3;
-  --bg: #0b0b0c;
-  /* app background */
-  --card: #111113;
-  /* card surfaces */
-  --border: #26272b;
+  --text: #e3e5e8;
+  /* light gray text */
+  --muted: #b5bac1;
+  /* secondary text */
+  --bg: #2b2d31;
+  /* background */
+  --card: #313338;
+  /* surfaces/cards */
+  --border: #3f4147;
   /* subtle separators */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
-  --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.45);
 }
 
 html,
@@ -151,7 +157,7 @@ p {
   border: none;
   /* no hard border frame */
   cursor: pointer;
-  transition: transform .08s ease, box-shadow .25s ease, background-color .25s ease, filter .25s ease;
+  transition: transform .08s ease, background-color .25s ease, filter .25s ease;
 }
 
 .ui-btn:hover {
@@ -170,12 +176,10 @@ p {
 .ui-btn.primary {
   background: linear-gradient(180deg, var(--brand), var(--brand-600));
   color: #fff;
-  box-shadow: 0 8px 16px rgba(91, 140, 255, .25);
 }
 
 .ui-btn.primary:hover {
   filter: brightness(1.05);
-  box-shadow: 0 10px 24px rgba(167, 139, 250, .28);
 }
 
 .ui-btn.ghost {
@@ -185,13 +189,37 @@ p {
 
 .ui-btn.ghost:hover {
   background: rgba(2, 6, 23, .06);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .06);
+}
+
+/* Contextual hover styles */
+.ui-btn.ghost.accent:hover {
+  background: rgba(167, 139, 250, .16);
+  color: var(--brand-700);
+}
+
+.ui-btn.ghost.danger {
+  color: #dc2626;
+}
+
+.ui-btn.ghost.danger:hover {
+  background: rgba(220, 38, 38, .14);
+  color: #dc2626;
+}
+
+.theme-dark .ui-btn.ghost.accent:hover {
+  background: rgba(167, 139, 250, .22);
+  color: #e9e4ff;
+}
+
+.theme-dark .ui-btn.ghost.danger:hover {
+  background: rgba(220, 38, 38, .22);
+  color: #ffb4b4;
 }
 
 /* focus style for accessibility without showing a border */
 .ui-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(167, 139, 250, .28);
+  outline: 2px solid rgba(167, 139, 250, .6);
+  outline-offset: 2px;
 }
 
 .link {
@@ -214,9 +242,9 @@ p {
 /* Increase top bar contrast in dark mode */
 .theme-dark .app-navbar {
   /* higher contrast background and clearer divider on black */
-  background: linear-gradient(180deg, #121212 0%, #0b0b0c 100%);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 24px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, #313338 0%, #2b2d31 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
 .brand-dot {
@@ -345,12 +373,12 @@ p {
 }
 
 .theme-dark .user-menu .menu-pop {
-  background: #141416;
-  border-color: #2b2c30;
+  background: var(--card);
+  border-color: var(--border);
 }
 
 .theme-dark .menu-item {
-  color: #e5eaf5;
+  color: var(--text);
 }
 
 .theme-dark .menu-item:hover {
@@ -359,14 +387,14 @@ p {
 
 /* Dark-mode surface tuning for better contrast */
 .theme-dark .ui-card {
-  background: #111113;
+  background: var(--card);
   border-color: var(--border);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 .theme-dark .ui-input {
-  background: #0f0f10;
-  border-color: #2b2c30;
+  background: var(--card);
+  border-color: var(--border);
 }
 
 .theme-dark .ui-input:focus {
@@ -474,7 +502,7 @@ p {
 /* Dark-mode specific readability tweaks */
 .theme-dark .ui-input {
   background: var(--card);
-  border-color: #354766;
+  border-color: var(--border);
 }
 
 .theme-dark .ui-input:focus {
@@ -484,20 +512,17 @@ p {
 
 .theme-dark .ui-card {
   background: var(--card);
-  border-color: #31425f;
+  border-color: var(--border);
 }
 
 .theme-dark .toolbar {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
 }
 
-.theme-dark .ui-btn.primary {
-  box-shadow: 0 8px 16px rgba(167, 139, 250, .22);
-}
+
 
 .theme-dark .ui-btn.ghost:hover {
   background: rgba(255, 255, 255, .06);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
 }
 
 .theme-dark .prose code {
@@ -505,5 +530,5 @@ p {
 }
 
 .theme-dark .prose pre {
-  background: #151515;
+  background: #1e1f22;
 }

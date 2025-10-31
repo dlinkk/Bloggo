@@ -1,12 +1,12 @@
-# Nền tảng Blog Đa người dùng trên Google Cloud (Multi-tenant Blog Platform)
+# Nền tảng Blog Đa người dùng trên Google Cloud **Bloggo**
 
 Đây là một dự án xây dựng một nền tảng blog cho phép nhiều người dùng đăng ký, tạo blog cá nhân với tên miền phụ (subdomain) và tùy chỉnh tên miền riêng (custom domain), tương tự như Blogger.com. Dự án được xây dựng hoàn toàn trên các dịch vụ serverless của Google Cloud Platform.
 
 ## Kiến trúc Hệ thống
 
-![Sơ đồ kiến trúc (Bạn có thể tự vẽ một sơ đồ đơn giản và thêm vào đây)](link-toi-so-do.png)
+![Sơ đồ kiến trúc](link-toi-so-do.png)
 
-- **Frontend (Dashboard):** Giao diện quản trị cho người dùng, được xây dựng bằng HTML, CSS, JavaScript thuần và host trên **Firebase Hosting**.
+- **Frontend (Dashboard):** Giao diện quản trị cho người dùng, được xây dựng bằng Vue.js, JavaScript và host trên **Firebase Hosting**.
 - **Backend:** Một ứng dụng Node.js/Express.js chạy trên **Cloud Run**, xử lý toàn bộ logic nghiệp vụ (tạo blog, bài viết, xóa tài khoản...) và logic hiển thị blog công khai.
 - **Cơ sở dữ liệu:** **Cloud Firestore** được sử dụng để lưu trữ thông tin người dùng, blog, và bài viết.
 - **Xác thực:** **Google Cloud Identity Platform (Firebase Authentication)** quản lý việc đăng ký, đăng nhập và xác thực email.

@@ -4,7 +4,7 @@
       <div class="d-flex align-items-center gap-2">
         <button class="ui-btn ghost sidebar-top-toggle" type="button" @click="toggleSidebar" title="Thu gọn / Mở sidebar">☰</button>
         <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="#" @click.prevent="goDashboard">
-          <span class="brand-dot"></span>
+          <img src="/favicon.svg" alt="Logo" class="brand-logo" width="18" height="18" />
           <strong>Bloggo</strong>
         </a>
       </div>
@@ -101,6 +101,7 @@ const handleDeleteAccount = async () => {
 
 <style scoped>
 .navbar-brand strong { letter-spacing: -0.02em; }
+.brand-logo { display: inline-block; vertical-align: middle; }
 .user-menu { position: relative; }
 .menu-pop { position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 6px; z-index: 1000; }
 .menu-item { display: block; width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 8px; color: var(--text); }
