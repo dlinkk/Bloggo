@@ -22,8 +22,9 @@
 - [x] Hiển thị blog công khai qua tên miền phụ.
 - [x] Logic xử lý tên miền tùy chỉnh (custom domain).
 - [x] Người dùng tự xóa tài khoản và toàn bộ dữ liệu liên quan.
+- ......
 
-## Hướng dẫn Cài đặt và Chạy dự án
+## Hướng dẫn Cài đặt và Chạy dự án (Dành cho Dev)
 
 Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend`.
 
@@ -33,7 +34,7 @@ Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend
 - [Node.js](https://nodejs.org/) (phiên bản v18 trở lên).
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) đã được cài đặt và cấu hình.
 - [Firebase CLI](https://firebase.google.com/docs/cli) đã được cài đặt và cấu hình.
-- Một địa chỉ IP tĩnh đã được tạo trên Google Cloud.
+- Một địa chỉ IP tĩnh đã được tạo trên Google Cloud (34.144.221.251)
 
 ### 1. Cấu hình Backend
 
@@ -68,12 +69,5 @@ Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend
     firebase deploy
     ```
 
-### 3. Cấu hình Load Balancer
-
-- Làm theo các bước đã được hướng dẫn để tạo một Global External HTTPS Load Balancer.
-- Frontend trỏ đến địa chỉ IP tĩnh.
-- Backend trỏ đến Serverless NEG đã được tạo và liên kết với dịch vụ Cloud Run.
-
-Sau khi hoàn tất, bạn có thể truy cập vào URL Firebase Hosting để bắt đầu sử dụng.
 
 ---
