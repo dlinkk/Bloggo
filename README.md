@@ -46,10 +46,10 @@ Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend
     npm install
     ```
 3.  **Mở file `index.js` và cập nhật các biến sau:**
-    - `platformDomain`: Thay đổi địa chỉ IP trong chuỗi `.my-platform.[YOUR_STATIC_IP].nip.io` thành địa chỉ IP ngoài (external IP) do Google Cloud cung cấp cho bạn (không phải một chuỗi IP giả hoặc placeholder).
+    - `platformDomain`: Thay đổi địa chỉ IP trong chuỗi `.my-platform.[YOUR_STATIC_IP].nip.io` thành địa chỉ IP 34.144.221.251
 4.  **Triển khai lên Cloud Run:**
     ```bash
-    gcloud run deploy blog-platform-service --source . --platform managed --region us-central1 --allow-unauthenticated --project=[YOUR_PROJECT_ID]
+    gcloud run deploy blog-platform-service --source . --platform managed --region us-central1 --allow-unauthenticated --project=multi-tenant-blog-platform
     ```
     Lưu lại **Service URL** sau khi triển khai thành công.
 
@@ -59,11 +59,10 @@ Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend
     ```bash
     cd ../blog-platform-frontend 
     ```
-    *(Lưu ý: không có `npm install` vì đây là dự án tĩnh)*
 2.  **Mở file `public/auth.js` và `public/dashboard.js`:**
     - Cập nhật object `firebaseConfig` với thông tin từ dự án Firebase của bạn.
     - Cập nhật biến `CLOUD_RUN_BACKEND_URL` bằng **Service URL** bạn đã lưu ở bước trên.
-    - Cập nhật biến `YOUR_STATIC_IP` bằng địa chỉ IP ngoài (external IP) do Google Cloud cung cấp cho dự án/Load Balancer của bạn.
+    - Cập nhật biến `YOUR_STATIC_IP` bằng địa chỉ IP 34.144.221.251 do Google Cloud cung cấp cho dự án/Load Balancer của bạn.
 3.  **Triển khai lên Firebase Hosting:**
     ```bash
     firebase deploy
@@ -78,4 +77,3 @@ Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend
 Sau khi hoàn tất, bạn có thể truy cập vào URL Firebase Hosting để bắt đầu sử dụng.
 
 ---
-_Dự án này được tạo ra với mục đích học tập và trình diễn các kỹ năng sử dụng Google Cloud Platform._
