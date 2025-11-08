@@ -61,9 +61,9 @@ Dự án bao gồm 2 phần: `blog-platform-backend` và `blog-platform-frontend
     cd ../blog-platform-frontend 
     ```
 2.  **Mở file `public/auth.js` và `public/dashboard.js`:**
-    - Cập nhật object `firebaseConfig` với thông tin từ dự án Firebase của bạn.
-    - Cập nhật biến `CLOUD_RUN_BACKEND_URL` bằng **Service URL** bạn đã lưu ở bước trên.
-    - Cập nhật biến `YOUR_STATIC_IP` bằng địa chỉ IP 34.144.221.251 do Google Cloud cung cấp cho dự án/Load Balancer của bạn.
+    - Cập nhật object `firebaseConfig` với thông tin từ dự án Firebase.
+    - Cập nhật biến `CLOUD_RUN_BACKEND_URL` bằng **Service URL** đã lưu ở bước trên.
+    - Cập nhật biến `YOUR_STATIC_IP` bằng địa chỉ IP 34.144.221.251 do Google Cloud cung cấp cho dự án/Load Balancer.
 3.  **Triển khai lên Firebase Hosting:**
     ```bash
     firebase deploy

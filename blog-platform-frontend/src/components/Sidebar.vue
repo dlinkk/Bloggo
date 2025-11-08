@@ -8,23 +8,23 @@
     </div>
 
     <button class="new-post-btn" type="button" @click="openNewPost">
-      <Icon name="plus" :size="18" class="me-1" />
+      <Icon name="plus" :size="18" />
       BÀI ĐĂNG MỚI
     </button>
 
     <nav class="nav-list">
-      <button class="nav-item" :class="{ active: activeTab === 'posts' }" @click="navigate('posts')">
+      <RouterLink class="nav-item" :class="{ active: isPosts }" to="/dashboard">
         <Icon name="post" :size="18" class="me-2" />
         Bài đăng
-      </button>
-      <button class="nav-item" :class="{ active: activeTab === 'analytics' }" @click="navigate('analytics')">
+      </RouterLink>
+      <RouterLink class="nav-item" :class="{ active: isAnalytics }" to="/dashboard/analytics">
         <Icon name="analytics" :size="18" class="me-2" />
         Thống kê
-      </button>
-      <button class="nav-item" :class="{ active: activeTab === 'comments' }" @click="navigate('comments')">
+      </RouterLink>
+      <RouterLink class="nav-item" :class="{ active: isComments }" to="/dashboard/comments">
         <Icon name="comments" :size="18" class="me-2" />
         Nhận xét
-      </button>
+      </RouterLink>
     </nav>
 
     <a v-if="blogUrl && blogUrl !== '#'" class="sidebar-footer link d-inline-flex align-items-center gap-1" :href="blogUrl" target="_blank" rel="noopener noreferrer">
@@ -37,21 +37,19 @@
 
 <script setup>
 import Icon from './Icon.vue'
-const props = defineProps({
-  activeTab: { type: String, default: 'posts' },
-  blogUrl: { type: String, default: '#' },
-  collapsed: { type: Boolean, default: false }
-})
-
-const emit = defineEmits(['navigate','new-post'])
-
-const navigate = (tab) => emit('navigate', tab)
+import { computed } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+const props = defineProps({ blogUrl: { type: String, default: '#' }, collapsed: { type: Boolean, default: false } })
+const emit = defineEmits(['new-post'])
+const route = useRoute();
+const router = useRouter();
+const isPosts = computed(() => route.path === '/dashboard' || route.path.startsWith('/dashboard/') === false && route.path.startsWith('/dashboard'))
+const isAnalytics = computed(() => route.path.startsWith('/dashboard/analytics'))
+const isComments = computed(() => route.path.startsWith('/dashboard/comments'))
 
 const openNewPost = () => {
-  // Phát sự kiện lên Dashboard để hiển thị composer
-  emit('navigate', 'posts')
+  router.push('/dashboard')
   emit('new-post')
-  // Fallback toàn cục
   setTimeout(() => window.dispatchEvent(new CustomEvent('open-new-post')), 150)
 }
 </script>
@@ -63,12 +61,14 @@ const openNewPost = () => {
   padding: 20px 16px;
   background: var(--card);
   border-right: 1px solid var(--border);
-  min-height: calc(100vh - 56px);
+  /* Keep sidebar fixed while main scrolls */
+  position: sticky;
+  top: 0; /* page-container already starts under navbar */
+  height: calc(100vh - 60px);
   box-sizing: border-box;
   overflow: hidden;
   transform: translateX(0);
   transition: transform .25s ease;
-  position: relative; /* default in-flow */
 }
 .app-sidebar.collapsed {
   position: absolute; /* remove from flex flow so main expands */
@@ -80,13 +80,59 @@ const openNewPost = () => {
 .brand-left { display:flex; align-items:center; gap:10px; }
 .new-post-btn {
   width: 100%;
-  padding: 10px 12px;
-  background: linear-gradient(180deg, var(--brand), var(--brand-600));
-  color: white; border: 0; border-radius: 10px; font-weight:700; box-shadow: 0 8px 16px rgba(91,140,255,.18);
+  padding: 14px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: .4px;
+  line-height: 1; /* center text vertically within pill */
+  border: 0;
+  border-radius: 999px; /* pill */
+  color: #fff;
+  background:
+    linear-gradient(135deg, var(--brand) 0%, var(--brand-600) 45%, var(--brand-700) 100%);
+  position: relative;
+  box-shadow:
+    0 2px 4px -2px rgba(0,0,0,.2),
+    0 6px 16px rgba(139,92,246,.35);
+  transition: background-position .5s ease, transform .18s ease, box-shadow .25s ease, filter .25s ease;
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+}
+.new-post-btn:hover {
+  background-position: 100% 50%;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 10px -2px rgba(0,0,0,.25),
+    0 10px 26px rgba(139,92,246,.45);
+  filter: brightness(1.05);
+}
+.new-post-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 6px -2px rgba(0,0,0,.35),
+    0 6px 18px rgba(139,92,246,.35);
+}
+.new-post-btn:focus-visible {
+  outline: 3px solid rgba(167,139,250,.5);
+  outline-offset: 3px;
+}
+.new-post-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.55), transparent 60%);
+  mix-blend-mode: overlay;
+  opacity: .65;
 }
 
 .nav-list { margin-top: 18px; display:flex; flex-direction: column; gap:8px; }
-.nav-item { text-align: left; padding: 10px 12px; border-radius: 8px; background: transparent; border: 0; color: var(--muted); }
+.nav-item { text-align: left; padding: 10px 12px; border-radius: 8px; background: transparent; border: 0; color: var(--muted); display:flex; align-items:center; text-decoration:none; }
 .nav-item.active { background: rgba(91,140,255,.06); color: var(--text); font-weight:700; }
 .sidebar-footer { margin-top: auto; padding-top: 18px; font-size: 13px; }
 

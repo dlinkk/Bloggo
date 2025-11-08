@@ -4,28 +4,10 @@
     <Sidebar :active-tab="activeTab" :blog-url="blogUrl" :collapsed="isSidebarCollapsed" @navigate="onNavigate" @new-post="onNewPost" />
     <main class="main-area">
       <div v-if="isLoading" class="d-flex justify-content-center mt-5">
-        <div class="spinner-border" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
       </div>
-      
       <div v-else>
-        <!-- Tab: Bài đăng -->
-        <template v-if="activeTab === 'posts'">
-          <ManageBlog v-if="blog" :blog-data="blog" :open-composer-signal="openComposerSignal" @post-created="fetchBlogData" />
-          <CreateBlogForm v-else @blog-created="fetchBlogData" />
-        </template>
-
-        <!-- Other tabs: placeholders for now -->
-        <section v-else-if="activeTab === 'analytics'" class="ui-card p-3 p-md-4">
-          <h4 class="section-title">Thống kê</h4>
-          <p class="muted">Phần này đang được phát triển.</p>
-        </section>
-        <section v-else-if="activeTab === 'comments'" class="ui-card p-3 p-md-4">
-          <h4 class="section-title">Nhận xét</h4>
-          <p class="muted">Phần này đang được phát triển.</p>
-        </section>
-        
+        <router-view :blog="blog" :open-composer-signal="openComposerSignal" @refresh-blog="fetchBlogData" />
       </div>
     </main>
   </div>
@@ -37,14 +19,25 @@ import { useRouter } from 'vue-router';
 import { auth } from '../services/firebase';
 import api from '../services/api';
 import CreateBlogForm from '../components/CreateBlogForm.vue';
-import ManageBlog from '../components/ManageBlog.vue';
 import Sidebar from '../components/Sidebar.vue';
 
 const router = useRouter();
 const userEmail = computed(() => auth.currentUser?.email || ''); 
 const isLoading = ref(true);
 const blog = ref(null);
+// Active tab now derived from current route path
+import { useRoute } from 'vue-router';
+const route = useRoute();
 const activeTab = ref('posts');
+function syncTab(){
+  if (route.path.startsWith('/dashboard/analytics')) activeTab.value = 'analytics';
+  else if (route.path.startsWith('/dashboard/comments')) activeTab.value = 'comments';
+  else activeTab.value = 'posts';
+}
+syncTab();
+// watch route change
+import { watch } from 'vue';
+watch(() => route.path, () => syncTab());
 const YOUR_STATIC_IP = '34.144.221.251'; // keep consistent with ManageBlog
 const blogUrl = computed(() => (blog.value?.subdomain) ? `http://${blog.value.subdomain}.my-platform.${YOUR_STATIC_IP}.nip.io` : '#');
 const isSidebarCollapsed = ref(false);
@@ -73,8 +66,10 @@ const fetchBlogData = async () => {
 
 onMounted(fetchBlogData);
 
-const onNavigate = (tab) => {
-  activeTab.value = tab;
+const routerViewNavigate = (tab) => {
+  if (tab === 'analytics') router.push('/dashboard/analytics');
+  else if (tab === 'comments') router.push('/dashboard/comments');
+  else router.push('/dashboard');
 };
 
 const toggleSidebar = () => {
@@ -82,8 +77,7 @@ const toggleSidebar = () => {
 };
 
 const onNewPost = () => {
-  activeTab.value = 'posts';
-  // đảm bảo ManageBlog đã mount trước khi phát signal
+  routerViewNavigate('posts');
   nextTick(() => { openComposerSignal.value++; });
 };
 

@@ -18,3 +18,20 @@ api.interceptors.request.use(async (config) => {
 });
 
 export default api; // Export instance đã được cấu hình
+
+// Convenience helpers for posts CRUD
+export async function createPost(blogId, title, content) {
+    const { data } = await api.post('/api/posts', { blogId, title, content });
+    return data;
+}
+
+export async function updatePost(blogId, id, fields) {
+    const { data } = await api.put(`/api/posts/${id}`, { blogId, ...fields });
+    return data;
+}
+
+export async function deletePost(blogId, id) {
+    // backend expects blogId via query for delete
+    const res = await api.delete(`/api/posts/${id}`, { params: { blogId } });
+    return res.status === 204;
+}

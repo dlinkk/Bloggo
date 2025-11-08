@@ -2,32 +2,22 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { auth } from '../services/firebase';
 
 const routes = [
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('../views/Login.vue')
-    },
-    {
-        path: '/signup',
-        name: 'Signup',
-        component: () => import('../views/Signup.vue')
-    },
+    { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
+    { path: '/signup', name: 'Signup', component: () => import('../views/Signup.vue') },
     {
         path: '/dashboard',
-        name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
-        meta: { requiresAuth: true } // Đánh dấu route này cần đăng nhập
+        meta: { requiresAuth: true },
+        children: [
+            { path: '', name: 'DashboardPosts', component: () => import('../views/DashboardPosts.vue') },
+            { path: 'analytics', name: 'DashboardAnalytics', component: () => import('../views/Analytics.vue') },
+            { path: 'comments', name: 'DashboardComments', component: () => import('../views/Comments.vue') },
+        ],
     },
-    { // Route mặc định
-        path: '/:pathMatch(.*)*',
-        redirect: '/dashboard'
-    }
+    { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
 ];
 
-const router = createRouter({
-    history: createWebHistory(),
-    routes,
-});
+const router = createRouter({ history: createWebHistory(), routes });
 
 // "Navigation Guard" - Chạy trước mỗi lần chuyển trang
 router.beforeEach((to, from, next) => {

@@ -4,7 +4,7 @@
       <div class="d-flex align-items-center gap-2">
         <button class="ui-btn ghost sidebar-top-toggle" type="button" @click="toggleSidebar" title="Thu gọn / Mở sidebar">☰</button>
         <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="#" @click.prevent="goDashboard">
-          <img src="/favicon.svg" alt="Logo" class="brand-logo" width="18" height="18" />
+          <img src="/logo.png" alt="Logo" class="brand-logo" width="26" height="26" />
           <strong>Bloggo</strong>
         </a>
       </div>

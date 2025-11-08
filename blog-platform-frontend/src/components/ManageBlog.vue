@@ -16,7 +16,7 @@
 
         <input v-model="post.title" type="text" placeholder="Tiêu đề bài viết" class="ui-input title-input" ref="titleInputRef">
 
-        <Editor v-model="post.content" ref="editorRef" @image-drop="handleUploadFile" />
+  <RichEditor v-model="post.content" ref="editorRef" @image-drop="handleUploadFile" />
 
         <button @click="handleCreatePost" :disabled="isSubmittingPost" class="ui-btn primary submit-post-btn">
           {{ isSubmittingPost ? 'Đang đăng...' : 'Đăng bài' }}
@@ -24,7 +24,7 @@
       </section>
 
       <!-- Danh sách bài viết ở dưới -->
-      <section class="ui-card section-card p-3 p-md-4">
+      <section v-if="!createVisible" class="ui-card section-card p-3 p-md-4">
         <h4 class="section-title">Các bài viết đã đăng</h4>
 
         <div class="list-controls d-flex flex-wrap gap-2 mb-3">
@@ -53,18 +53,33 @@
           <div class="muted small mb-2">{{ filteredPosts.length }} bài viết</div>
           <ul class="post-list list-compact">
             <li v-for="p in visiblePosts" :key="p.id" class="post-row post-row-large">
+              <img v-if="getThumbnail(p.content)" class="post-thumb" :src="getThumbnail(p.content)" alt="thumbnail" loading="lazy" draggable="false" />
+              <div v-else class="post-thumb placeholder" :title="p.title || 'Không có tiêu đề'">
+                <span class="placeholder-initial">{{ getInitial(p.title) }}</span>
+              </div>
               <div class="post-main">
                 <div class="post-title d-flex align-items-center gap-2">
                   <span>{{ p.title }}</span>
-                  <span class="muted small" v-if="readingTime(p)">• {{ readingTime(p) }} min read</span>
                 </div>
                 <div class="post-excerpt muted">{{ getExcerpt(p.content, 200) }}</div>
+                <div class="post-readtime muted small" v-if="readingTime(p)">{{ readingTime(p) }} min read</div>
                 <div class="post-actions d-flex gap-2 mt-2">
-                  <button class="ui-btn ghost small accent" @click="openPreview(p)">Xem</button>
-                  <button class="ui-btn ghost small danger" @click="deletePost(p)" :disabled="deletingIds.has(p.id)">{{ deletingIds.has(p.id) ? 'Đang xóa...' : 'Xóa' }}</button>
+                  <button class="ui-btn ghost small accent" @click="openPreview(p)" :title="'Xem bài viết'">
+                    <Icon name="eye" :size="16" />
+                  </button>
+                  <button class="ui-btn ghost small" @click="openEdit(p)" :title="'Chỉnh sửa bài viết'">
+                    <Icon name="edit" :size="16" />
+                  </button>
+                  <button class="ui-btn ghost small danger" @click="openDeleteModal(p)" :disabled="deletingIds.has(p.id)" :title="'Xóa bài viết'">
+                    <Icon v-if="!deletingIds.has(p.id)" name="trash" :size="16" />
+                    <span v-else>...</span>
+                  </button>
+                </div>
+                <div class="post-date muted small" v-if="p.createdAt">
+                  Đã xuất bản • {{ formatPublished(p.createdAt) }}
+                  <span v-if="p.updatedAt && isUpdated(p)"> • Cập nhật {{ timeAgo(p.updatedAt) }}</span>
                 </div>
               </div>
-              <img v-if="getThumbnail(p.content)" class="post-thumb" :src="getThumbnail(p.content)" alt="thumbnail" loading="lazy" />
             </li>
           </ul>
           <div class="d-flex justify-content-center mt-3" v-if="visibleCount < filteredPosts.length">
@@ -81,6 +96,49 @@
             <div class="prose" v-html="selectedPost?.content"></div>
           </div>
         </div>
+
+        <!-- Edit modal -->
+        <div v-if="showEdit" class="modal-backdrop" @click.self="closeEdit">
+          <div class="modal-card ui-card modal-flex">
+            <!-- Sticky toolbar on top -->
+            <div class="modal-toolbar">
+              <div class="toolbar-left">
+                <h5 class="mb-0">Chỉnh sửa bài viết</h5>
+              </div>
+              <div class="toolbar-actions d-flex gap-2">
+                <button class="ui-btn primary" :disabled="isUpdating" @click="handleUpdatePost">{{ isUpdating ? 'Đang lưu...' : 'Lưu thay đổi' }}</button>
+                <button class="ui-btn ghost" @click="cancelEdit">Hủy</button>
+                <button class="ui-btn ghost" @click="closeEdit">Đóng</button>
+              </div>
+            </div>
+            <!-- Scrollable body only -->
+            <div class="modal-body">
+              <input v-model="editingPost.title" type="text" placeholder="Tiêu đề" class="ui-input title-input" />
+              <RichEditor v-model="editingPost.content" ref="editorEditRef" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete confirm modal -->
+        <div v-if="showDelete" class="modal-backdrop" @click.self="closeDelete">
+          <div class="modal-card ui-card modal-danger">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Xóa bài viết?</h5>
+              <button class="ui-btn ghost" @click="closeDelete">Đóng</button>
+            </div>
+            <p class="muted small mb-2">Hành động này <strong>không thể hoàn tác</strong>. Bài viết sẽ bị xóa vĩnh viễn khỏi blog của bạn.</p>
+            <div class="confirm-box mb-3">
+              <div class="confirm-title">{{ deletingPost?.title || 'Không có tiêu đề' }}</div>
+              <div class="confirm-excerpt">{{ getExcerpt(deletingPost?.content, 160) }}</div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="ui-btn danger" :disabled="deletingIds.has(deletingPost?.id)" @click="deletePost(deletingPost)">
+                {{ deletingIds.has(deletingPost?.id) ? 'Đang xóa...' : 'Xóa bài viết' }}
+              </button>
+              <button class="ui-btn ghost" @click="closeDelete">Hủy</button>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -88,8 +146,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import api from '../services/api';
-import Editor from './Editor.vue'; // Import component Editor
+import api, { updatePost as apiUpdatePost } from '../services/api';
+import RichEditor from './RichEditor.vue';
+import Icon from './Icon.vue';
 
 console.log('--- [ManageBlog] Component Setup ---');
 
@@ -108,7 +167,12 @@ const titleInputRef = ref(null);
 const posts = ref([]);
 const isLoadingPosts = ref(true);
 const deletingIds = reactive(new Set());
+const showDelete = ref(false);
+const deletingPost = ref(null);
 const createVisible = ref(false);
+const showEdit = ref(false);
+const isUpdating = ref(false);
+const editingPost = reactive({ id: '', title: '', content: '' });
 
 // List controls
 const searchQuery = ref('');
@@ -159,6 +223,7 @@ const visiblePosts = computed(() => filteredPosts.value.slice(0, visibleCount.va
 
 // Ref đến component Editor để gọi hàm của nó
 const editorRef = ref(null);
+const editorEditRef = ref(null);
 
 // Computed Properties
 const YOUR_STATIC_IP = '34.144.221.251'; // THAY IP CỦA BẠN
@@ -298,11 +363,73 @@ const getThumbnail = (html) => {
   return src
 }
 
+// Lấy ký tự đầu tiên của tiêu đề để hiển thị trong ô vuông placeholder
+const getInitial = (title) => {
+  const t = (title || '').trim()
+  if (!t) return '—'
+  // Lấy ký tự đầu tiên khác khoảng trắng; hỗ trợ chữ cái có dấu
+  return t.charAt(0).toUpperCase()
+}
+
 // Reading time helper (~200 wpm)
 const readingTime = (p) => {
   const text = (p?.content || '').replace(/<[^>]+>/g, ' ').trim();
   const words = text ? text.split(/\s+/).length : 0;
   return Math.max(1, Math.ceil(words / 200));
+};
+
+// Robust formatter for server timestamps (ISO string, number, Firestore Timestamp)
+const toDate = (input) => {
+  if (!input) return null;
+  // Firestore Timestamp object
+  if (typeof input?.toDate === 'function') return input.toDate();
+  if (typeof input === 'object') {
+    if (typeof input.seconds === 'number') return new Date(input.seconds * 1000);
+    if (typeof input._seconds === 'number') return new Date(input._seconds * 1000);
+  }
+  // Unix epoch (seconds or ms)
+  if (typeof input === 'number') return new Date(input < 1e12 ? input * 1000 : input);
+  // ISO string or numeric string
+  if (typeof input === 'string') {
+    if (/^\d+$/.test(input)) return new Date(parseInt(input, 10) < 1e12 ? parseInt(input, 10) * 1000 : parseInt(input, 10));
+    const n = Date.parse(input);
+    if (!Number.isNaN(n)) return new Date(n);
+  }
+  return null;
+};
+
+const formatPublished = (d) => {
+  const dt = toDate(d);
+  if (!dt) return '';
+  const day = dt.getDate();
+  const month = dt.getMonth() + 1;
+  return `${day} thg ${month}`;
+};
+
+const isUpdated = (p) => {
+  if (!p?.createdAt || !p?.updatedAt) return false;
+  const c = toDate(p.createdAt)?.getTime();
+  const u = toDate(p.updatedAt)?.getTime();
+  if (!c || !u) return false;
+  return (u - c) > 60 * 1000; // hơn 60s coi như đã cập nhật
+};
+
+const timeAgo = (d) => {
+  const dt = toDate(d);
+  if (!dt) return '';
+  const diff = Date.now() - dt.getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return 'vừa xong';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  const dday = Math.floor(h / 24);
+  if (dday < 30) return `${dday} ngày trước`;
+  const mo = Math.floor(dday / 30);
+  if (mo < 12) return `${mo} tháng trước`;
+  const y = Math.floor(dday / 365);
+  return `${y} năm trước`;
 };
 
 // Preview modal
@@ -311,19 +438,67 @@ const selectedPost = ref(null);
 const openPreview = (p) => { selectedPost.value = p; showPreview.value = true; };
 const closePreview = () => { showPreview.value = false; selectedPost.value = null; };
 
-// Delete post (assumes backend supports DELETE /api/posts/:id)
+// Delete post modal flow
+const openDeleteModal = (p) => { deletingPost.value = p; showDelete.value = true; };
+const closeDelete = () => { showDelete.value = false; deletingPost.value = null; };
 const deletePost = async (p) => {
   if (!p?.id) return;
-  const ok = confirm('Bạn có chắc chắn muốn xóa bài viết này?');
-  if (!ok) return;
   deletingIds.add(p.id);
   try {
-    await api.delete(`/api/posts/${p.id}`);
+    await api.delete(`/api/posts/${p.id}`, { params: { blogId: props.blogData.id } });
     await fetchPosts();
+    closeDelete();
   } catch (e) {
     alert('Không thể xóa bài viết: ' + (e.response?.data?.message || e.message));
   } finally {
     deletingIds.delete(p.id);
+  }
+};
+
+// Edit post
+const openEdit = (p) => {
+  if (!p) return;
+  editingPost.id = p.id;
+  editingPost.title = p.title;
+  editingPost.content = p.content;
+  showEdit.value = true;
+  nextTick(() => {
+    try { editorEditRef.value?.focus?.(); } catch {}
+  });
+};
+const closeEdit = () => {
+  showEdit.value = false;
+  editingPost.id = '';
+  editingPost.title = '';
+  editingPost.content = '';
+};
+
+const cancelEdit = () => {
+  // revert changes but keep modal open
+  if (selectedPost.value) {
+    editingPost.id = selectedPost.value.id;
+    editingPost.title = selectedPost.value.title;
+    editingPost.content = selectedPost.value.content;
+  }
+};
+
+const handleUpdatePost = async () => {
+  if (!editingPost.id) return;
+  if (!editingPost.title || !editingPost.content || editingPost.content === '<p></p>') {
+    return alert('Vui lòng nhập đủ tiêu đề và nội dung.');
+  }
+  isUpdating.value = true;
+  try {
+    await apiUpdatePost(props.blogData.id, editingPost.id, {
+      title: editingPost.title,
+      content: editingPost.content,
+    });
+    await fetchPosts();
+    closeEdit();
+  } catch (e) {
+    alert('Không thể cập nhật bài viết: ' + (e.response?.data?.message || e.message));
+  } finally {
+    isUpdating.value = false;
   }
 };
 </script>
@@ -355,7 +530,7 @@ const deletePost = async (p) => {
 .post-list { overflow: hidden; border-radius: var(--radius); border: 1px solid var(--border); }
 .post-row { 
   display: grid; 
-  grid-template-columns: 1fr 80px; /* thumbnail fixed on right */
+  grid-template-columns: 110px 1fr; /* thumbnail on the left, larger */
   align-items: center; 
   gap: 16px; 
   padding: 14px 18px; 
@@ -371,12 +546,27 @@ const deletePost = async (p) => {
 .post-main { min-width: 0; }
 .post-title { font-size: 16px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .post-excerpt { font-size: 13.5px; white-space: normal; overflow: hidden; text-overflow: ellipsis; max-height: 3.6em; }
-.post-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
+.post-thumb { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
+.post-thumb.placeholder { 
+  display: grid; 
+  place-items: center; 
+  background: linear-gradient(180deg, rgba(226,232,240,0.9), rgba(203,213,225,0.9)); 
+  color: #1f2937; 
+}
+.post-thumb, .post-thumb.placeholder { cursor: default !important; user-select: none; }
+.placeholder-initial { font-size: 42px; font-weight: 800; line-height: 1; }
+
+/* Hover actions + meta */
+.post-actions { opacity: 1; pointer-events: auto; }
+.post-meta { font-size: 12.5px; margin-top: 4px; }
+.post-readtime { margin-top: 6px; }
+.post-date { margin-top: 8px; }
 
 /* Responsive tweak */
 @media (max-width: 640px) {
-  .post-row { grid-template-columns: 1fr 64px; gap: 12px; }
-  .post-thumb { width: 64px; height: 64px; }
+  .post-row { grid-template-columns: 84px 1fr; gap: 12px; }
+  .post-thumb { width: 84px; height: 84px; }
+  .placeholder-initial { font-size: 32px; }
   .post-title { font-size: 15px; }
   .post-excerpt { font-size: 13px; }
 }
@@ -386,6 +576,18 @@ const deletePost = async (p) => {
 /* Modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(2,6,23,.5); display: grid; place-items: center; padding: 16px; z-index: 1050; }
 .modal-card { max-width: 900px; width: 100%; max-height: 80vh; overflow: auto; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+/* Flex modal to separate header (sticky) and scroll body */
+.modal-flex { display: flex; flex-direction: column; padding: 0; }
+.modal-toolbar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: linear-gradient(90deg,#f8fafc,#f1f5f9); border-bottom: 1px solid var(--border); border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); backdrop-filter: blur(4px); }
+.modal-toolbar h5 { font-size: 15px; font-weight: 700; }
+.modal-body { padding: 16px; overflow-y: auto; max-height: calc(80vh - 64px); display: flex; flex-direction: column; gap: 14px; }
+.modal-body .title-input { margin-bottom: 4px; }
+.toolbar-actions .ui-btn.primary { font-weight: 600; }
+/* Danger styling for delete modal */
+.modal-danger { border-color: var(--danger-500, #dc2626); }
+.confirm-box { border: 1px dashed var(--border); padding: 12px; border-radius: 8px; background: rgba(220,38,38,.04); }
+.confirm-title { font-weight: 800; margin-bottom: 6px; }
+.confirm-excerpt { color: var(--muted); font-size: 13.5px; }
 /* Ảnh trong preview luôn fit khung modal */
 .modal-card :deep(img) {
   max-width: 100% !important;

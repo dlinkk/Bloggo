@@ -51,13 +51,19 @@ body {
   display: flex;
   align-items: stretch;
   gap: 0;
-  min-height: calc(100vh - 56px);
+  /* Let parent control vertical sizing; fill remaining space */
+  flex: 1 1 auto;
+  min-height: 0;
   position: relative;
 }
 
 .main-area {
   flex: 1 1 auto;
   padding: 20px 16px;
+  /* Only this area scrolls vertically */
+  overflow-y: auto;
+  min-height: 0;
+  height: 100%;
 }
 
 @media (max-width: 992px) {
@@ -84,7 +90,15 @@ body {
 
 /* Containers */
 .page-container {
-  padding: 24px 16px 60px;
+  /* Turn into flex column that fills viewport minus navbar */
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  /* prevent body scroll; delegate to main-area */
+  padding: 24px 16px 8px;
+  /* tighten bottom further */
 }
 
 .page-narrow {
@@ -258,7 +272,8 @@ p {
 
 /* Auth pages */
 .auth-wrap {
-  min-height: calc(100vh - 56px);
+  /* Keep auth pages full height minus navbar for consistent vertical centering */
+  min-height: calc(100vh - 60px);
   display: grid;
   place-items: center;
   padding: 24px;

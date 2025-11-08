@@ -5,52 +5,52 @@ const { PLATFORM_DOMAIN } = require('../config/app');
 const converter = new showdown.Converter();
 
 async function renderPublicBlog(req, res) {
-    if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
+  if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
 
-    const hostname = req.hostname;
-    const platformDomain = PLATFORM_DOMAIN;
+  const hostname = req.hostname;
+  const platformDomain = PLATFORM_DOMAIN;
 
-    try {
-        const blogsRef = firestore.collection('blogs');
-        let blogSnapshot;
+  try {
+    const blogsRef = firestore.collection('blogs');
+    let blogSnapshot;
 
-        if (hostname.endsWith(platformDomain)) {
-            const subdomain = hostname.replace(platformDomain, '');
-            blogSnapshot = await blogsRef.where('subdomain', '==', subdomain).limit(1).get();
-        } else {
-            blogSnapshot = await blogsRef.where('customDomain', '==', hostname).limit(1).get();
-        }
+    if (hostname.endsWith(platformDomain)) {
+      const subdomain = hostname.replace(platformDomain, '');
+      blogSnapshot = await blogsRef.where('subdomain', '==', subdomain).limit(1).get();
+    } else {
+      blogSnapshot = await blogsRef.where('customDomain', '==', hostname).limit(1).get();
+    }
 
-        if (blogSnapshot.empty) {
-            return res.status(404).send(`<h1>404 - Blog Not Found</h1>`);
-        }
+    if (blogSnapshot.empty) {
+      return res.status(404).send(`<h1>404 - Blog Not Found</h1>`);
+    }
 
-        const blog = blogSnapshot.docs[0];
-        const blogData = blog.data();
-        let ownerDisplayName = '...';
-        if (blogData.ownerId) {
-            try {
-                const userDoc = await firestore.collection('users').doc(blogData.ownerId).get();
-                ownerDisplayName = userDoc.exists ? (userDoc.data().displayName || userDoc.data().email) : blogData.ownerId;
-            } catch (e) { ownerDisplayName = blogData.ownerId; }
-        }
+    const blog = blogSnapshot.docs[0];
+    const blogData = blog.data();
+    let ownerDisplayName = '...';
+    if (blogData.ownerId) {
+      try {
+        const userDoc = await firestore.collection('users').doc(blogData.ownerId).get();
+        ownerDisplayName = userDoc.exists ? (userDoc.data().displayName || userDoc.data().email) : blogData.ownerId;
+      } catch (e) { ownerDisplayName = blogData.ownerId; }
+    }
 
-        const postsSnapshot = await blog.ref.collection('posts').orderBy('createdAt', 'desc').get();
-        let postsHtml = '';
-        for (const postDoc of postsSnapshot.docs) {
-            const postData = { id: postDoc.id, ...postDoc.data() };
-            const commentsSnapshot = await postDoc.ref.collection('comments').orderBy('createdAt', 'asc').get();
-            let commentsHtml = '';
-            commentsSnapshot.forEach(commentDoc => {
-                const c = commentDoc.data();
-                const safeNickname = (c.nickname || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const safeText = (c.text || '').replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
-                commentsHtml += `<div class="comment"><strong>${safeNickname}:</strong><p>${safeText}</p></div>`;
-            });
+    const postsSnapshot = await blog.ref.collection('posts').orderBy('createdAt', 'desc').get();
+    let postsHtml = '';
+    for (const postDoc of postsSnapshot.docs) {
+      const postData = { id: postDoc.id, ...postDoc.data() };
+      const commentsSnapshot = await postDoc.ref.collection('comments').orderBy('createdAt', 'asc').get();
+      let commentsHtml = '';
+      commentsSnapshot.forEach(commentDoc => {
+        const c = commentDoc.data();
+        const safeNickname = (c.nickname || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeText = (c.text || '').replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
+        commentsHtml += `<div class="comment"><strong>${safeNickname}:</strong><p>${safeText}</p></div>`;
+      });
 
-            const postContentHtml = converter.makeHtml(postData.content || '');
+      const postContentHtml = converter.makeHtml(postData.content || '');
 
-            postsHtml += `
+      postsHtml += `
         <article class="post-container" id="post-${postData.id}">
           <h2>${postData.title}</h2>
           <div class="post-content">${postContentHtml}</div>
@@ -69,9 +69,9 @@ async function renderPublicBlog(req, res) {
             </div>
           </section>
         </article>`;
-        }
+    }
 
-        const finalHtml = `
+    const finalHtml = `
       <!DOCTYPE html>
       <html lang="vi">
       <head>
@@ -149,11 +149,11 @@ async function renderPublicBlog(req, res) {
       </body>
       </html>
     `;
-        return res.status(200).send(finalHtml);
-    } catch (error) {
-        console.error('Lỗi khi render trang blog:', error);
-        const hasCreds = !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        const helpHtml = `<!doctype html>
+    return res.status(200).send(finalHtml);
+  } catch (error) {
+    console.error('Lỗi khi render trang blog:', error);
+    const hasCreds = !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const helpHtml = `<!doctype html>
       <html lang="vi"><head><meta charset="utf-8"><title>500 - Lỗi Máy chủ Nội bộ</title>
       <meta name="viewport" content="width=device-width, initial-scale=1"></head>
       <body style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; max-width: 860px; margin: 40px auto; line-height:1.6; color:#333;">
@@ -172,8 +172,8 @@ npm run dev
         </pre>
         <p>Trạng thái biến GOOGLE_APPLICATION_CREDENTIALS: <strong>${hasCreds ? 'ĐÃ THIẾT LẬP' : 'CHƯA THIẾT LẬP'}</strong></p>
       </body></html>`;
-        return res.status(500).send(helpHtml);
-    }
+    return res.status(500).send(helpHtml);
+  }
 }
 
 module.exports = { renderPublicBlog };
