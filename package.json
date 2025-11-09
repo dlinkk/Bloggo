@@ -1,0 +1,20 @@
+{
+  "name": "bloggo",
+  "version": "1.0.0",
+  "description": "Đây là một dự án xây dựng một nền tảng blog cho phép nhiều người dùng đăng ký, tạo blog cá nhân với tên miền phụ (subdomain) và tùy chỉnh tên miền riêng (custom domain), tương tự như Blogger.com. Dự án được xây dựng hoàn toàn trên các dịch vụ serverless của Google Cloud Platform.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dlinkk/Bloggo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dlinkk/Bloggo/issues"
+  },
+  "homepage": "https://github.com/dlinkk/Bloggo#readme"
+}
