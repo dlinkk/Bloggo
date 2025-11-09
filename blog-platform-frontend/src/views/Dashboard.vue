@@ -1,7 +1,7 @@
 <template>
   <!-- Main Content -->
   <div class="layout-grid">
-    <Sidebar :active-tab="activeTab" :blog-url="blogUrl" :collapsed="isSidebarCollapsed" @navigate="onNavigate" @new-post="onNewPost" />
+  <Sidebar :active-tab="activeTab" :blog-url="blogUrl" :blog-name="blog?.title || ''" :collapsed="isSidebarCollapsed" @navigate="onNavigate" @new-post="onNewPost" />
     <main class="main-area">
       <div v-if="isLoading" class="d-flex justify-content-center mt-5">
         <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
@@ -98,7 +98,7 @@ onUnmounted(() => {
 
 // Logout đã có trên NavBar; giữ lại fallback nếu cần
 const handleLogout = async () => {
-  try { await auth.signOut(); router.push('/login'); } catch (error) { console.error("Error during logout:", error); }
+  try { await auth.signOut(); router.push('/'); } catch (error) { console.error("Error during logout:", error); }
 };
 
 // Xóa tài khoản/đăng xuất đã được gom vào menu trên NavBar

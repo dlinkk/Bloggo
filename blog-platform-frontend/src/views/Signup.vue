@@ -1,8 +1,8 @@
 <template>
   <div class="auth-card ui-card elevated p-4 p-md-5">
     <header class="mb-3 text-center">
-      <div class="d-inline-flex align-items-center justify-content-center mb-2">
-        <span class="brand-dot"></span>
+      <div class="d-inline-flex align-items-center justify-content-center mb-2 gap-2">
+        <img src="/logo.png" alt="Bloggo" class="brand-logo" />
         <span class="fw-bold">Bloggo</span>
       </div>
       <h1 class="auth-title h3 mb-1">Tạo tài khoản</h1>
@@ -11,22 +11,37 @@
 
     <p v-if="message" class="small" :style="{ color: isError ? 'red' : 'green' }">{{ message }}</p>
     <form @submit.prevent="handleSignup" class="d-grid gap-3">
-      <div>
+      <div class="input-field">
         <label class="ui-label" for="email">Email</label>
-        <input id="email" v-model="email" type="email" class="ui-input" placeholder="your@email.com" required>
+        <div class="input-wrapper">
+          <Icon name="mail" :size="18" class="input-icon" />
+          <input id="email" v-model="email" type="email" class="ui-input" placeholder="example@gmail.com" required>
+        </div>
       </div>
-      <div>
+      <div class="input-field">
         <label class="ui-label" for="displayName">Tên hiển thị</label>
-        <input id="displayName" v-model="displayName" type="text" class="ui-input" placeholder="duy nhất trên nền tảng" required>
+        <input id="displayName" v-model="displayName" type="text" class="ui-input" placeholder="Tên tùy chỉnh của bạn" required>
         <div class="ui-help">Tên này sẽ hiển thị công khai và cần là duy nhất.</div>
       </div>
-      <div>
+      <div class="input-field">
         <label class="ui-label" for="password">Mật khẩu</label>
-        <input id="password" v-model="password" type="password" class="ui-input" placeholder="Ít nhất 6 ký tự" required>
+        <div class="input-wrapper">
+          <Icon name="lock" :size="18" class="input-icon" />
+          <input id="password" v-model="password" :type="passwordVisible ? 'text' : 'password'" class="ui-input" placeholder="Ít nhất 6 ký tự" required>
+          <button type="button" class="toggle-visibility" @click="passwordVisible = !passwordVisible" :aria-label="passwordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">
+            <Icon :name="passwordVisible ? 'eye-off' : 'eye'" :size="18" />
+          </button>
+        </div>
       </div>
-      <div>
+      <div class="input-field">
         <label class="ui-label" for="passwordConfirm">Xác nhận mật khẩu</label>
-        <input id="passwordConfirm" v-model="passwordConfirm" type="password" class="ui-input" required>
+        <div class="input-wrapper">
+          <Icon name="lock" :size="18" class="input-icon" />
+          <input id="passwordConfirm" v-model="passwordConfirm" :type="confirmVisible ? 'text' : 'password'" class="ui-input" placeholder="Nhập lại mật khẩu" required>
+          <button type="button" class="toggle-visibility" @click="confirmVisible = !confirmVisible" :aria-label="confirmVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">
+            <Icon :name="confirmVisible ? 'eye-off' : 'eye'" :size="18" />
+          </button>
+        </div>
       </div>
       <button type="submit" class="ui-btn primary w-100" :disabled="isSubmitting">
         {{ isSubmitting ? 'Đang xử lý...' : 'Đăng ký' }}
@@ -42,6 +57,7 @@ import { ref } from 'vue';
 import api from '../services/api'; // Dùng api đã cấu hình axios
 import { auth } from '../services/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import Icon from '../components/Icon.vue';
 
 const email = ref('');
 const displayName = ref('');
@@ -50,6 +66,8 @@ const passwordConfirm = ref('');
 const message = ref('');
 const isError = ref(true);
 const isSubmitting = ref(false); // Thêm state để vô hiệu hóa nút
+const passwordVisible = ref(false);
+const confirmVisible = ref(false);
 
 const handleSignup = async () => {
   isError.value = true;
@@ -108,4 +126,53 @@ const handleSignup = async () => {
 </script>
 
 <style scoped>
+.brand-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(13, 19, 33, 0.15);
+}
+
+.input-field {
+  display: grid;
+  gap: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.input-wrapper .ui-input {
+  padding-left: 40px;
+  padding-right: 44px;
+}
+
+.toggle-visibility {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.toggle-visibility:hover {
+  color: var(--brand-700);
+}
 </style>

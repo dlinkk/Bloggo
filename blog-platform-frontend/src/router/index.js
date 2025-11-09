@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { auth } from '../services/firebase';
 
 const routes = [
+    { path: '/', name: 'Landing', component: () => import('../views/Landing.vue') },
     { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
     { path: '/signup', name: 'Signup', component: () => import('../views/Signup.vue') },
     {
@@ -14,7 +15,7 @@ const routes = [
             { path: 'comments', name: 'DashboardComments', component: () => import('../views/Comments.vue') },
         ],
     },
-    { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
 ];
 
 const router = createRouter({ history: createWebHistory(), routes });

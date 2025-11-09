@@ -6,12 +6,12 @@
     <form @submit.prevent="handleCreateBlog" class="d-grid gap-3">
       <div>
         <label class="ui-label" for="blog-title">Tên blog</label>
-        <input id="blog-title" v-model="title" type="text" class="ui-input" placeholder="Ví dụ: Góc Công Nghệ" required>
+        <input id="blog-title" v-model="title" type="text" class="ui-input" placeholder="Ví dụ: Blog của tôi" required>
       </div>
       <div>
         <label class="ui-label" for="subdomain">Tên miền phụ</label>
-        <input id="subdomain" v-model="subdomain" type="text" class="ui-input" placeholder="ví dụ: my-blog" required>
-        <div class="ui-help">Tên miền phụ sẽ tạo địa chỉ dạng: <strong>https://ten-cua-ban.my-platform.nip.io</strong></div>
+        <input id="subdomain" v-model="subdomain" type="text" class="ui-input" placeholder="Ví dụ: yourname" required>
+        <div class="ui-help">Tên miền phụ sẽ tạo địa chỉ dạng: <strong>https://yourname.my-platform.nip.io</strong></div>
       </div>
       <button type="submit" class="ui-btn primary w-100" :disabled="isSubmitting">
         {{ isSubmitting ? 'Đang tạo...' : 'Tạo Blog' }}

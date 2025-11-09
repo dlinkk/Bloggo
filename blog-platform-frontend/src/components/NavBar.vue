@@ -61,7 +61,7 @@ const toggleTheme = () => {
 const handleLogout = async () => {
   try {
     await auth.signOut()
-    router.push('/login')
+    router.push('/')
   } catch (e) { console.error(e) }
 }
 
@@ -90,6 +90,7 @@ const handleDeleteAccount = async () => {
     const response = await api.delete('/api/users/me')
     alert(response.data?.message || 'Tài khoản đã được xóa thành công.')
     await auth.signOut()
+    router.push('/')
   } catch (error) {
     alert('Đã xảy ra lỗi khi xóa tài khoản: ' + (error.response?.data?.message || error.message))
   } finally {

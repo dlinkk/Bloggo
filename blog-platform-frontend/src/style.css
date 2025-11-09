@@ -6,6 +6,9 @@
   --brand-600: #a78bfa;
   /* violet-400 */
   --brand-700: #8b5cf6;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
   /* violet-500/600 */
   --text: #1e293b;
   --muted: #64748b;
@@ -39,91 +42,94 @@
   /* subtle separators */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.45);
+  --danger-500: #f87171;
+  --danger-600: #ef4444;
+  --danger-700: #dc2626;
 }
 
 html,
 body {
   height: 100%;
-}
 
-/* App layout */
-.layout-grid {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  /* Let parent control vertical sizing; fill remaining space */
-  flex: 1 1 auto;
-  min-height: 0;
-  position: relative;
-}
-
-.main-area {
-  flex: 1 1 auto;
-  padding: 20px 16px;
-  /* Only this area scrolls vertically */
-  overflow-y: auto;
-  min-height: 0;
-  height: 100%;
-}
-
-@media (max-width: 992px) {
-  .main-area {
-    padding: 16px;
+  /* App layout */
+  .layout-grid {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    /* Let parent control vertical sizing; fill remaining space */
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
   }
-}
 
-/* removed sidebar floating toggle (now controlled from top navbar) */
+  .main-area {
+    flex: 1 1 auto;
+    padding: 20px 16px;
+    /* Only this area scrolls vertically */
+    overflow-y: auto;
+    min-height: 0;
+    height: 100%;
+  }
 
-body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  color: var(--text);
-  background: radial-gradient(1200px 800px at 10% -20%, rgba(167, 139, 250, 0.10), transparent 60%),
-    radial-gradient(1000px 800px at 110% 10%, rgba(139, 92, 246, 0.08), transparent 60%),
-    var(--bg);
-  margin: 0;
-}
+  @media (max-width: 992px) {
+    .main-area {
+      padding: 16px;
+    }
+  }
 
-/* In true black mode, remove colored gradients behind content */
-.theme-dark body {
-  background: var(--bg);
-}
+  /* removed sidebar floating toggle (now controlled from top navbar) */
 
-/* Containers */
-.page-container {
-  /* Turn into flex column that fills viewport minus navbar */
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 60px);
-  height: calc(100vh - 60px);
-  overflow: hidden;
-  /* prevent body scroll; delegate to main-area */
-  padding: 24px 16px 8px;
-  /* tighten bottom further */
-}
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    color: var(--text);
+    background: radial-gradient(1200px 800px at 10% -20%, rgba(167, 139, 250, 0.10), transparent 60%),
+      radial-gradient(1000px 800px at 110% 10%, rgba(139, 92, 246, 0.08), transparent 60%),
+      var(--bg);
+    margin: 0;
+  }
 
-.page-narrow {
-  max-width: 420px;
-  margin: 0 auto;
-}
+  /* In true black mode, remove colored gradients behind content */
+  .theme-dark body {
+    background: var(--bg);
+  }
 
-/* Cards */
-.ui-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-}
+  /* Containers */
+  .page-container {
+    /* Turn into flex column that fills viewport minus navbar */
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 60px);
+    height: calc(100vh - 60px);
+    overflow: hidden;
+    /* prevent body scroll; delegate to main-area */
+    padding: 24px 16px 8px;
+    /* tighten bottom further */
+  }
 
-.ui-card.elevated {
-  box-shadow: var(--shadow-md);
-}
+  .page-narrow {
+    max-width: 420px;
+    margin: 0 auto;
+  }
 
-/* Headings */
-h1,
-h2,
-h3,
-h4 {
-  color: var(--text);
+  /* Cards */
+  .ui-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .ui-card.elevated {
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Headings */
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--text);
+  }
 }
 
 p {
@@ -172,6 +178,7 @@ p {
   /* no hard border frame */
   cursor: pointer;
   transition: transform .08s ease, background-color .25s ease, filter .25s ease;
+  text-decoration: none;
 }
 
 .ui-btn:hover {
@@ -193,6 +200,15 @@ p {
 }
 
 .ui-btn.primary:hover {
+  filter: brightness(1.05);
+}
+
+.ui-btn.danger {
+  background: linear-gradient(180deg, var(--danger-500), var(--danger-600));
+  color: #fff;
+}
+
+.ui-btn.danger:hover {
   filter: brightness(1.05);
 }
 

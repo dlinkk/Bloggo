@@ -12,7 +12,7 @@
         <p v-if="uploadMessage" :style="{ color: uploadError ? 'red' : 'green' }">{{ uploadMessage }}</p>
 
         <label for="media-upload-btn" class="file-upload-label">Thêm Ảnh</label>
-        <input type="file" @change="handleFileSelect" accept="image/*" ref="fileInputRef" id="media-upload-btn" style="display: none;">
+  <input type="file" @change="handleFileSelect" accept="image/*" multiple ref="fileInputRef" id="media-upload-btn" style="display: none;">
 
         <input v-model="post.title" type="text" placeholder="Tiêu đề bài viết" class="ui-input title-input" ref="titleInputRef">
 
@@ -106,15 +106,20 @@
                 <h5 class="mb-0">Chỉnh sửa bài viết</h5>
               </div>
               <div class="toolbar-actions d-flex gap-2">
+                <button class="ui-btn primary" type="button" @click="triggerEditUpload">Thêm Ảnh</button>
+                <input type="file" @change="handleEditFileSelect" accept="image/*" multiple ref="fileEditInputRef" id="media-edit-upload-btn" style="display: none;">
                 <button class="ui-btn primary" :disabled="isUpdating" @click="handleUpdatePost">{{ isUpdating ? 'Đang lưu...' : 'Lưu thay đổi' }}</button>
-                <button class="ui-btn ghost" @click="cancelEdit">Hủy</button>
                 <button class="ui-btn ghost" @click="closeEdit">Đóng</button>
               </div>
             </div>
             <!-- Scrollable body only -->
             <div class="modal-body">
               <input v-model="editingPost.title" type="text" placeholder="Tiêu đề" class="ui-input title-input" />
-              <RichEditor v-model="editingPost.content" ref="editorEditRef" />
+              <RichEditor
+                v-model="editingPost.content"
+                ref="editorEditRef"
+                @image-drop="(file) => handleUploadFile(file, editorEditRef, { silent: true })"
+              />
             </div>
           </div>
         </div>
@@ -149,6 +154,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from
 import api, { updatePost as apiUpdatePost } from '../services/api';
 import RichEditor from './RichEditor.vue';
 import Icon from './Icon.vue';
+import { notifyError, notifySuccess } from '../stores/notifications';
 
 console.log('--- [ManageBlog] Component Setup ---');
 
@@ -163,6 +169,7 @@ const isSubmittingPost = ref(false);
 const uploadMessage = ref('');
 const uploadError = ref(false);
 const fileInputRef = ref(null);
+const fileEditInputRef = ref(null);
 const titleInputRef = ref(null);
 const posts = ref([]);
 const isLoadingPosts = ref(true);
@@ -199,8 +206,8 @@ const filteredPosts = computed(() => {
     case 'newest':
       if (hasCreatedAt.value) {
         const ts = (x) => {
-          const n = new Date(x).getTime();
-          return Number.isFinite(n) ? n : 0;
+          const d = toDate(x);
+          return d ? d.getTime() : 0;
         };
         arr.sort((a,b)=> ts(b.createdAt) - ts(a.createdAt));
       }
@@ -208,8 +215,8 @@ const filteredPosts = computed(() => {
     case 'oldest':
       if (hasCreatedAt.value) {
         const ts = (x) => {
-          const n = new Date(x).getTime();
-          return Number.isFinite(n) ? n : 0;
+          const d = toDate(x);
+          return d ? d.getTime() : 0;
         };
         arr.sort((a,b)=> ts(a.createdAt) - ts(b.createdAt));
       }
@@ -250,21 +257,27 @@ const fetchPosts = async () => {
   }
 };
 
-const handleFileSelect = async (event) => {
-  const file = event?.target?.files?.[0];
-  if (!file) return;
-  await handleUploadFile(file);
+const triggerEditUpload = () => {
+  fileEditInputRef.value?.click();
 };
 
-const handleUploadFile = async (file) => {
-  if (!file || !file.type.startsWith('image/')) {
-    uploadMessage.value = 'Vui lòng chỉ chọn file ảnh.';
-    uploadError.value = true;
+const processImageUpload = async (file, targetEditor = editorRef, options = {}) => {
+  const silent = options.silent === true;
+
+  if (!file || !file.type?.startsWith('image/')) {
+    if (silent) {
+      notifyError('Vui lòng chỉ chọn file ảnh.');
+    } else {
+      uploadMessage.value = 'Vui lòng chỉ chọn file ảnh.';
+      uploadError.value = true;
+    }
     return;
   }
 
-  uploadMessage.value = 'Đang chuẩn bị...';
-  uploadError.value = false;
+  if (!silent) {
+    uploadMessage.value = 'Đang chuẩn bị...';
+    uploadError.value = false;
+  }
 
   try {
     const { data } = await api.post('/api/generate-upload-url', {
@@ -272,7 +285,7 @@ const handleUploadFile = async (file) => {
       contentType: file.type,
     });
 
-    uploadMessage.value = 'Đang tải lên...';
+    if (!silent) uploadMessage.value = 'Đang tải lên...';
 
     await fetch(data.signedUrl, {
       method: 'PUT',
@@ -280,39 +293,81 @@ const handleUploadFile = async (file) => {
       body: file,
     });
 
-    uploadMessage.value = 'Tải lên thành công!';
+    if (!silent) uploadMessage.value = 'Tải lên thành công!';
 
-    if (editorRef.value) {
-      editorRef.value.addImage(data.publicUrl);
+    const editorInstance = targetEditor?.value;
+    if (editorInstance?.addImage) {
+      editorInstance.addImage(data.publicUrl);
     }
-
-    if (fileInputRef.value) fileInputRef.value.value = '';
   } catch (error) {
-    uploadMessage.value = 'Lỗi tải lên: ' + (error.response?.data?.message || error.message);
-    uploadError.value = true;
+    const message = 'Lỗi tải lên: ' + (error.response?.data?.message || error.message);
+    if (silent) {
+      notifyError(message);
+    } else {
+      uploadMessage.value = message;
+      uploadError.value = true;
+    }
+  }
+};
+
+const handleUploadFiles = async (files, targetEditor = editorRef, options = {}) => {
+  if (!files || files.length === 0) return;
+  for (const file of files) {
+    await processImageUpload(file, targetEditor, options);
+  }
+};
+
+const handleFileSelect = async (event) => {
+  const files = Array.from(event?.target?.files || []);
+  if (!files.length) return;
+  await handleUploadFiles(files);
+  if (fileInputRef.value) fileInputRef.value.value = '';
+};
+
+const handleEditFileSelect = async (event) => {
+  const files = Array.from(event?.target?.files || []);
+  if (!files.length) return;
+  await handleUploadFiles(files, editorEditRef, { silent: true });
+  if (fileEditInputRef.value) fileEditInputRef.value.value = '';
+};
+
+const handleUploadFile = async (payload, targetEditor = editorRef, options = {}) => {
+  if (!payload) return;
+  if (payload instanceof File) {
+    await handleUploadFiles([payload], targetEditor, options);
+  } else if (Array.isArray(payload)) {
+    await handleUploadFiles(payload, targetEditor, options);
+  } else if (typeof payload.length === 'number') {
+    await handleUploadFiles(Array.from(payload), targetEditor, options);
   }
 };
 
 const handleCreatePost = async () => {
-    // Tiptap có thể trả về '<p></p>' khi rỗng, cần kiểm tra
-    if (!post.title || post.content === '<p></p>' || !post.content) {
-        return alert('Vui lòng nhập đủ tiêu đề và nội dung.');
-    }
-    isSubmittingPost.value = true;
-    try {
-        await api.post('/api/posts', {
-            blogId: props.blogData.id,
-            title: post.title,
-            content: post.content, // Gửi nội dung dạng HTML lên server
-        });
-        post.title = '';
-        post.content = ''; // Tiptap sẽ tự cập nhật giao diện
-        await fetchPosts();
-    } catch (error) {
-        alert('Lỗi khi tạo bài viết: ' + (error.response?.data?.message || error.message));
-    } finally {
-        isSubmittingPost.value = false;
-    }
+  // Tiptap có thể trả về '<p></p>' khi rỗng, cần kiểm tra
+  if (!post.title || post.content === '<p></p>' || !post.content) {
+    notifyError('Vui lòng nhập đủ tiêu đề và nội dung.');
+    return;
+  }
+
+  isSubmittingPost.value = true;
+  try {
+    await api.post('/api/posts', {
+      blogId: props.blogData.id,
+      title: post.title,
+      content: post.content, // Gửi nội dung dạng HTML lên server
+    });
+
+    post.title = '';
+    post.content = ''; // Tiptap sẽ tự cập nhật giao diện
+
+    await fetchPosts();
+    closeComposer();
+    notifySuccess('Đã đăng bài viết thành công.');
+  } catch (error) {
+    notifyError('Lỗi khi tạo bài viết: ' + (error.response?.data?.message || error.message));
+  } finally {
+    isSubmittingPost.value = false;
+  }
 };
 
 // Hàm này không cần thiết nữa vì nội dung đã là HTML
@@ -448,8 +503,9 @@ const deletePost = async (p) => {
     await api.delete(`/api/posts/${p.id}`, { params: { blogId: props.blogData.id } });
     await fetchPosts();
     closeDelete();
+    notifySuccess('Đã xóa bài viết.');
   } catch (e) {
-    alert('Không thể xóa bài viết: ' + (e.response?.data?.message || e.message));
+    notifyError('Không thể xóa bài viết: ' + (e.response?.data?.message || e.message));
   } finally {
     deletingIds.delete(p.id);
   }
@@ -473,19 +529,11 @@ const closeEdit = () => {
   editingPost.content = '';
 };
 
-const cancelEdit = () => {
-  // revert changes but keep modal open
-  if (selectedPost.value) {
-    editingPost.id = selectedPost.value.id;
-    editingPost.title = selectedPost.value.title;
-    editingPost.content = selectedPost.value.content;
-  }
-};
-
 const handleUpdatePost = async () => {
   if (!editingPost.id) return;
   if (!editingPost.title || !editingPost.content || editingPost.content === '<p></p>') {
-    return alert('Vui lòng nhập đủ tiêu đề và nội dung.');
+    notifyError('Vui lòng nhập đủ tiêu đề và nội dung.');
+    return;
   }
   isUpdating.value = true;
   try {
@@ -495,8 +543,9 @@ const handleUpdatePost = async () => {
     });
     await fetchPosts();
     closeEdit();
+    notifySuccess('Đã cập nhật bài viết.');
   } catch (e) {
-    alert('Không thể cập nhật bài viết: ' + (e.response?.data?.message || e.message));
+    notifyError('Không thể cập nhật bài viết: ' + (e.response?.data?.message || e.message));
   } finally {
     isUpdating.value = false;
   }
@@ -514,6 +563,7 @@ const handleUpdatePost = async () => {
 .submit-post-btn { margin-top: 15px; }
 
 /* Style cho nút upload file giả */
+/* maintain legacy composer upload button style */
 .file-upload-label {
   display: inline-block;
   padding: 8px 12px;

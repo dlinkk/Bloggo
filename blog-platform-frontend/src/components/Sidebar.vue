@@ -1,9 +1,12 @@
 <template>
   <aside class="app-sidebar" :class="{ collapsed }">
-    <div class="brand">
-      <div class="brand-left">
-        <div class="brand-dot"></div>
-        <strong>Bloggo</strong>
+    <div class="brand-card">
+      <div class="brand-avatar">
+        {{ displayInitial }}
+      </div>
+      <div class="brand-text">
+        <span class="brand-label">Blog của bạn</span>
+        <strong class="brand-name">{{ displayName }}</strong>
       </div>
     </div>
 
@@ -39,13 +42,24 @@
 import Icon from './Icon.vue'
 import { computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-const props = defineProps({ blogUrl: { type: String, default: '#' }, collapsed: { type: Boolean, default: false } })
+const props = defineProps({
+  blogUrl: { type: String, default: '#' },
+  collapsed: { type: Boolean, default: false },
+  blogName: { type: String, default: '' }
+})
 const emit = defineEmits(['new-post'])
 const route = useRoute();
 const router = useRouter();
 const isPosts = computed(() => route.path === '/dashboard' || route.path.startsWith('/dashboard/') === false && route.path.startsWith('/dashboard'))
 const isAnalytics = computed(() => route.path.startsWith('/dashboard/analytics'))
 const isComments = computed(() => route.path.startsWith('/dashboard/comments'))
+
+const displayName = computed(() => {
+  const name = props.blogName?.trim()
+  return name || 'Bảng điều khiển'
+})
+
+const displayInitial = computed(() => displayName.value.charAt(0).toUpperCase())
 
 const openNewPost = () => {
   router.push('/dashboard')
@@ -76,8 +90,64 @@ const openNewPost = () => {
   transform: translateX(-100%);
   pointer-events: none;
 }
-.brand { display:flex; align-items:center; justify-content: space-between; gap:10px; margin-bottom: 18px; }
-.brand-left { display:flex; align-items:center; gap:10px; }
+.brand-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(196,181,253,0.95), rgba(139,92,246,0.92));
+  box-shadow: 0 12px 30px -18px rgba(139,92,246,0.8);
+  overflow: hidden;
+  color: #fff;
+}
+
+.brand-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.55), transparent 60%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.brand-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  z-index: 1;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1;
+}
+
+.brand-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.brand-name {
+  font-size: 16px;
+  line-height: 1.1;
+}
 .new-post-btn {
   width: 100%;
   padding: 14px 18px;
