@@ -43,6 +43,7 @@ async function renderPublicBlog(req, res) {
       let commentsHtml = '';
       commentsSnapshot.forEach(commentDoc => {
         const c = commentDoc.data();
+        if (c.status && c.status !== 'approved') return;
         const safeNickname = (c.nickname || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const safeText = (c.text || '').replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
         commentsHtml += `<div class="comment"><strong>${safeNickname}:</strong><p>${safeText}</p></div>`;
@@ -145,6 +146,47 @@ async function renderPublicBlog(req, res) {
               .finally(() => { button.disabled = false; button.textContent = 'Gửi'; });
             }
           });
+        </script>
+        <script>
+          // Basic analytics tracker: page view + engagement on unload
+          (function(){
+            try {
+              var blogId = '${blog.id}'; // inline from server
+              var storageKey = 'bloggo_visitorId';
+              var visitorId = localStorage.getItem(storageKey);
+              if (!visitorId) {
+                visitorId = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+                  (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+                );
+                localStorage.setItem(storageKey, visitorId);
+              }
+              var startTime = performance.now();
+              var maxScroll = 0;
+              window.addEventListener('scroll', function(){
+                var h = document.documentElement;
+                var scrolled = (h.scrollTop || document.body.scrollTop);
+                var height = (h.scrollHeight - h.clientHeight) || 1;
+                var pct = Math.round((scrolled / height) * 100);
+                if (pct > maxScroll) maxScroll = pct;
+              }, { passive: true });
+              function send(payload){
+                try {
+                  var body = JSON.stringify(payload);
+                  var blob = new Blob([body], { type: 'application/json' });
+                  navigator.sendBeacon('/api/public/track', blob);
+                } catch (e) { /* ignore */ }
+              }
+              // page_view at load
+              send({ type: 'page_view', blogId: blogId, referrer: document.referrer, visitorId: visitorId });
+              // engagement on hidden
+              document.addEventListener('visibilitychange', function(){
+                if (document.visibilityState === 'hidden') {
+                  var durationMs = Math.round(performance.now() - startTime);
+                  send({ type: 'engagement', blogId: blogId, visitorId: visitorId, durationMs: durationMs, scrollPct: maxScroll, referrer: document.referrer });
+                }
+              });
+            } catch (e) { /* ignore tracking errors */ }
+          })();
         </script>
       </body>
       </html>
