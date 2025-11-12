@@ -101,44 +101,36 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8080/api/chat';
+        // [SỬA ĐỔI] Trỏ đến API test mới (không cần bảo mật)
+        const API_URL = 'http://localhost:8080/api/chat-test';
+
         const chatWindow = document.getElementById('chat-window');
         const chatForm = document.getElementById('chat-form');
         const promptInput = document.getElementById('prompt-input');
         const sendButton = document.getElementById('send-button');
 
-        // [QUAN TRỌNG] Biến này lưu trữ lịch sử chat ở phía client
-        // Định dạng này { role, text } dễ quản lý ở frontend
         let clientChatHistory = [
-            { role: 'ai', text: 'Xin chào! Hãy bắt đầu cuộc hội thoại.' }
+            { role: 'ai', text: 'Xin chào! Đây là endpoint /api/chat-test (không bảo mật).' }
         ];
 
-        // Hàm hiển thị tin nhắn lên UI
         function displayMessage(text, role) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', `${role}-message`);
             messageDiv.textContent = text;
             chatWindow.appendChild(messageDiv);
-            // Tự động cuộn xuống tin nhắn mới nhất
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // Render tin nhắn chào mừng ban đầu
         displayMessage(clientChatHistory[0].text, clientChatHistory[0].role);
 
-        // Xử lý khi gửi form
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const prompt = promptInput.value.trim();
             if (!prompt) return;
 
-            // 1. Hiển thị ngay tin nhắn của người dùng
             displayMessage(prompt, 'user');
 
-            // 2. [QUAN TRỌNG] Chuẩn bị lịch sử để gửi đi
-            // Chúng ta cần chuyển đổi từ định dạng của client -> định dạng Vertex AI
             const historyForApi = clientChatHistory.map(msg => {
-                // Chuyển 'ai' (client) thành 'model' (backend)
                 const role = (msg.role === 'ai') ? 'model' : 'user';
                 return {
                     role: role,
@@ -146,24 +138,21 @@
                 };
             });
 
-            // 3. Cập nhật lịch sử client VỚI tin nhắn mới của người dùng
             clientChatHistory.push({ role: 'user', text: prompt });
 
-            // Vô hiệu hóa input và nút gửi
             promptInput.value = '';
             promptInput.disabled = true;
             sendButton.disabled = true;
 
             try {
-                // 4. Gửi request bằng 'application/json' (không cần FormData)
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        prompt: prompt,       // Tin nhắn mới
-                        history: historyForApi  // Lịch sử TRƯỚC KHI gửi tin nhắn mới
+                        prompt: prompt,
+                        history: historyForApi
                     })
                 });
 
@@ -175,21 +164,18 @@
                 const data = await response.json();
                 const aiResponse = data.output;
 
-                // 5. Hiển thị và lưu trữ phản hồi của AI
                 displayMessage(aiResponse, 'ai');
                 clientChatHistory.push({ role: 'ai', text: aiResponse });
 
             } catch (error) {
                 displayMessage(`Lỗi: ${error.message}`, 'ai');
             } finally {
-                // Kích hoạt lại input và nút gửi
                 promptInput.disabled = false;
                 sendButton.disabled = false;
                 promptInput.focus();
             }
         });
 
-        // Tự động điều chỉnh chiều cao textarea
         promptInput.addEventListener('input', () => {
             promptInput.style.height = 'auto';
             promptInput.style.height = (promptInput.scrollHeight) + 'px';

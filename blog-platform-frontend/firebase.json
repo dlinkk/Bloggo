@@ -23,7 +23,6 @@
             }
         ],
         "predeploy": [
-            "npm ci",
             "npm run build"
         ]
     }

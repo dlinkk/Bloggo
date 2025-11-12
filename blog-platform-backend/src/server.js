@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { app } = require('./app');
 
 function start() {
@@ -7,4 +8,5 @@ function start() {
     });
 }
 
+// Chỉ export hàm start; việc gọi start() được thực hiện tại index.js
 module.exports = { start };

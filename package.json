@@ -4,7 +4,11 @@
   "description": "Đây là một dự án xây dựng một nền tảng blog cho phép nhiều người dùng đăng ký, tạo blog cá nhân với tên miền phụ (subdomain) và tùy chỉnh tên miền riêng (custom domain), tương tự như Blogger.com. Dự án được xây dựng hoàn toàn trên các dịch vụ serverless của Google Cloud Platform.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"PORT=8081 GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS node blog-platform-backend/index.js\" \"node blog-platform-backend/vertex-ai/app.js\" \"npm run dev --prefix blog-platform-frontend\"",
+    "dev:api": "PORT=8081 node blog-platform-backend/index.js",
+    "dev:ai": "node blog-platform-backend/vertex-ai/app.js",
+    "dev:front": "npm run dev --prefix blog-platform-frontend"
   },
   "repository": {
     "type": "git",
@@ -16,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/dlinkk/Bloggo/issues"
   },
-  "homepage": "https://github.com/dlinkk/Bloggo#readme"
+  "homepage": "https://github.com/dlinkk/Bloggo#readme",
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
 }

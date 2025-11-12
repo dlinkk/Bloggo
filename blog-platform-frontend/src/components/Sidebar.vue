@@ -80,7 +80,7 @@ const openNewPost = () => {
   top: 0; /* page-container already starts under navbar */
   height: calc(100vh - 60px);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: auto;
   transform: translateX(0);
   transition: transform .25s ease;
 }

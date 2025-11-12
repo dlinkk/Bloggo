@@ -106,7 +106,10 @@ function addImage(url) {
   inst.setSelection(range.index + 1);
 }
 
-defineExpose({ addImage });
+defineExpose({
+  addImage,
+  getQuill: () => quillRef.value?.getQuill() // Cần thiết cho ManageBlog.vue
+});
 
 // sync external model changes
 watch(() => props.modelValue, (val) => {

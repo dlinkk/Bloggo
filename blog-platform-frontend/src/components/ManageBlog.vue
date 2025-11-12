@@ -14,6 +14,8 @@
         <label for="media-upload-btn" class="file-upload-label">Thêm Ảnh</label>
   <input type="file" @change="handleFileSelect" accept="image/*" multiple ref="fileInputRef" id="media-upload-btn" style="display: none;">
 
+        <button class="ui-btn ghost small mb-2" @click="toggleAi" style="margin-left:8px">Trợ lý AI</button>
+
         <input v-model="post.title" type="text" placeholder="Tiêu đề bài viết" class="ui-input title-input" ref="titleInputRef">
 
   <RichEditor v-model="post.content" ref="editorRef" @image-drop="handleUploadFile" />
@@ -21,6 +23,8 @@
         <button @click="handleCreatePost" :disabled="isSubmittingPost" class="ui-btn primary submit-post-btn">
           {{ isSubmittingPost ? 'Đang đăng...' : 'Đăng bài' }}
         </button>
+
+        <AiAssistant :open="aiOpen" :title="post.title" :content="post.content" @close="aiOpen=false" @insert="insertFromAi" />
       </section>
 
       <!-- Danh sách bài viết ở dưới -->
@@ -154,6 +158,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from
 import api, { updatePost as apiUpdatePost } from '../services/api';
 import RichEditor from './RichEditor.vue';
 import Icon from './Icon.vue';
+import AiAssistant from './AiAssistant.vue';
 import { notifyError, notifySuccess } from '../stores/notifications';
 
 console.log('--- [ManageBlog] Component Setup ---');
@@ -180,6 +185,7 @@ const createVisible = ref(false);
 const showEdit = ref(false);
 const isUpdating = ref(false);
 const editingPost = reactive({ id: '', title: '', content: '' });
+const aiOpen = ref(false);
 
 // List controls
 const searchQuery = ref('');
@@ -370,9 +376,6 @@ const handleCreatePost = async () => {
   }
 };
 
-// Hàm này không cần thiết nữa vì nội dung đã là HTML
-// const renderMarkdown = (content) => { ... };
-
 onMounted(() => {
   fetchPosts();
   // Lắng nghe sự kiện mở nhanh vùng soạn bài từ Sidebar
@@ -395,6 +398,32 @@ const handleOpenNewPost = () => {
 
 const closeComposer = () => {
   createVisible.value = false;
+};
+
+const toggleAi = () => { aiOpen.value = !aiOpen.value; };
+const insertFromAi = (plainText) => {
+  if (!plainText || !editorRef.value) return;
+  const htmlToInsert = plainText
+    .split('\n') // Tách mỗi dòng thành một phần tử mảng
+    .map(line => line.trim()) // Xóa khoảng trắng thừa
+    .filter(line => line.length > 0) // Bỏ các dòng trống
+    .map(line => `<p>${line}</p>`) // Bọc mỗi dòng trong thẻ <p>
+    .join(''); // Nối tất cả lại
+
+  // 2. Chèn HTML đã được định dạng vào trình soạn thảo RichEditor (Quill)
+  const quill = editorRef.value?.getQuill(); // Lấy instance Quill (từ RichEditor.vue)
+  
+  if (quill) {
+      // Chèn vào vị trí con trỏ hiện tại
+      quill.clipboard.dangerouslyPasteHTML(quill.getSelection(true).index, htmlToInsert);
+  } else {
+      console.error("Không tìm thấy trình soạn thảo Quill! Sửa RichEditor.vue để expose getQuill().");
+      // Fallback (chỉ dùng khi lỗi)
+      post.content = (post.content || '') + htmlToInsert;
+  }
+  
+  // 3. Đóng trợ lý (Tùy chọn)
+  aiOpen.value = false;
 };
 
 // Mở composer khi Dashboard phát signal
