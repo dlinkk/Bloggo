@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
+    "firebase-tools": "^14.24.2",
     "vite": "^7.1.7"
   }
 }

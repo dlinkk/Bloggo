@@ -6,19 +6,19 @@ steps:
     entrypoint: 'npm'
     args: ['install']
     dir: 'blog-platform-frontend'
-    
+
   - name: 'node:20-slim'
     entrypoint: 'npm'
     args: ['run', 'build']
     dir: 'blog-platform-frontend'
 
-  - name: 'gcr.io/firebase/clib'
+  - name: 'node:20-slim'
+    entrypoint: 'npx'
     args: 
+      - firebase
       - deploy
       - '--project=${PROJECT_ID}'
       - '--only=hosting'
-    # Quan trọng: Đặt đúng thư mục chứa file firebase.json 
-    # (thường là thư mục gốc của dự án web)
     dir: 'blog-platform-frontend' 
 
 timeout: 600s
