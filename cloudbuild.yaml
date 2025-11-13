@@ -1,0 +1,18 @@
+steps:
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+    dir: 'blog-platform-frontend'
+
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
+    dir: 'blog-platform-frontend'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args: 
+      - gcloud
+      - firebase
+      - deploy
+      - '--project=${PROJECT_ID}'  # Sử dụng biến môi trường dự án
+      - '--only=hosting'           # Chỉ triển khai Hosting
+    entrypoint: bash
+timeout: 600s # Tối đa 10 phút
