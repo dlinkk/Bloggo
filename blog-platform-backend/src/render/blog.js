@@ -25,21 +25,29 @@ async function renderPublicBlog(req, res) {
       inlineCss = '';
     }
     const blogsRef = firestore.collection('blogs');
-    let blogSnapshot;
+    let blogDoc = null;
 
     if (hostname.endsWith(platformDomain)) {
       const subdomain = hostname.replace(platformDomain, '');
-      blogSnapshot = await blogsRef.where('subdomain', '==', subdomain).limit(1).get();
+      // Ưu tiên đọc theo docId (đã đổi để khớp subdomain), fallback where cho dữ liệu cũ
+      const byId = await blogsRef.doc(subdomain).get();
+      if (byId.exists) {
+        blogDoc = byId;
+      } else {
+        const snap = await blogsRef.where('subdomain', '==', subdomain).limit(1).get();
+        if (!snap.empty) blogDoc = snap.docs[0];
+      }
     } else {
-      blogSnapshot = await blogsRef.where('customDomain', '==', hostname).limit(1).get();
+      const snap = await blogsRef.where('customDomain', '==', hostname).limit(1).get();
+      if (!snap.empty) blogDoc = snap.docs[0];
     }
 
-    if (blogSnapshot.empty) {
+    if (!blogDoc) {
       return res.status(404).send(`<h1>404 - Blog Not Found</h1>`);
     }
 
-    const blog = blogSnapshot.docs[0];
-    const blogData = blog.data();
+    const blog = blogDoc;
+    const blogData = blogDoc.data();
     let ownerDisplayName = '...';
     if (blogData.ownerId) {
       try {
