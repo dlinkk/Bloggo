@@ -48,6 +48,15 @@ const ICONS = {
   lock: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/><line x1="12" y1="16" x2="12" y2="18"/>'
 }
 
+// Add a few more small icons used by the comments toolbar
+ICONS.check = '<polyline points="20 6 9 17 4 12"/>';
+ICONS.ban = '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>';
+ICONS.warning = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
+
+ICONS.sparkles = '<path d="M12 3v2"/><path d="M12 19v2"/><path d="M19 12h2"/><path d="M3 12h2"/><path d="m16.24 7.76 1.42 1.42"/><path d="m6.34 17.66 1.42 1.42"/><path d="m16.24 16.24 1.42-1.42"/><path d="m6.34 6.34 1.42-1.42"/><circle cx="12" cy="12" r="4" />';
+ICONS.image = '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-3.29-3.29a1 1 0 0 0-1.42 0L12 16"/>';
+ICONS.bot = '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/><path d="M12 11V7"/><rect x="9" y="3" width="6" height="4" rx="1"/>';
+
 const svgPath = computed(() => ICONS[props.name] || '')
 </script>
 

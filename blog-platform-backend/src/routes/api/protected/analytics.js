@@ -36,7 +36,7 @@ function parseRange(query) {
 
 function eachDate(from, to) {
   const dates = [];
-  for (let d = new Date(from.getTime()); d <= to; d = new Date(d.getTime() + 24*60*60*1000)) {
+  for (let d = new Date(from.getTime()); d <= to; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
     dates.push(new Date(d.getTime()));
   }
   return dates;
@@ -88,7 +88,7 @@ router.get('/analytics/blog/:blogId/summary', async (req, res) => {
     });
 
     return res.status(200).json({
-      range: { from: from.toISOString().slice(0,10), to: to.toISOString().slice(0,10) },
+      range: { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) },
       totals: { views, uniqueVisitors, likes, comments },
       referrers
     });
@@ -104,7 +104,7 @@ router.get('/analytics/blog/:blogId/series', async (req, res) => {
   try {
     const { blogId } = req.params;
     await assertOwnsBlog(req.user.uid, blogId);
-    const allowed = ['views','uniqueVisitors','comments'];
+    const allowed = ['views', 'uniqueVisitors', 'comments'];
     const metric = allowed.includes(req.query.metric) ? req.query.metric : 'views';
     const { from, to } = parseRange(req.query);
     const dates = eachDate(from, to);
@@ -134,7 +134,52 @@ router.get('/analytics/blog/:blogId/top-posts', async (req, res) => {
     const { blogId } = req.params;
     await assertOwnsBlog(req.user.uid, blogId);
     const limit = Math.min(parseInt(req.query.limit || '10', 10), 50);
+    const metric = req.query.metric || 'views';
     const { from, to } = parseRange(req.query);
+
+    // If metric === 'engagement' we rank by (likes + commentCount) within the range
+    if (metric === 'engagement') {
+      const postsSnap = await firestore.collection('blogs').doc(blogId).collection('posts').get();
+      const items = [];
+      for (const doc of postsSnap.docs) {
+        const postId = doc.id;
+        const pdata = doc.data() || {};
+        const likes = pdata.likes || 0;
+        // Count comments within range for this post
+        let commentsCount = 0;
+        try {
+          const commentsSnap = await firestore
+            .collection('blogs').doc(blogId).collection('posts').doc(postId).collection('comments')
+            .where('createdAt', '>=', from)
+            .where('createdAt', '<=', to)
+            .get();
+          commentsCount = commentsSnap.size || 0;
+        } catch (e) {
+          // if range queries require indexes, fall back to counting all comments (best-effort)
+          try {
+            const commentsSnap = await firestore
+              .collection('blogs').doc(blogId).collection('posts').doc(postId).collection('comments')
+              .get();
+            commentsCount = commentsSnap.size || 0;
+          } catch (_) { commentsCount = 0; }
+        }
+        const score = (likes || 0) + (commentsCount || 0);
+        items.push({ postId, views: score });
+      }
+      const arr = items.sort((a, b) => b.views - a.views).slice(0, limit);
+      const hydrated = [];
+      for (const item of arr) {
+        try {
+          const pSnap = await firestore.collection('blogs').doc(blogId).collection('posts').doc(item.postId).get();
+          hydrated.push({ ...item, title: pSnap.exists ? (pSnap.data().title || item.postId) : item.postId });
+        } catch (_) {
+          hydrated.push(item);
+        }
+      }
+      return res.status(200).json(hydrated);
+    }
+
+    // default: rank by views using analytics daily docs
     const fromKey = toDateKeyUTC(from);
     const toKey = toDateKeyUTC(to);
 

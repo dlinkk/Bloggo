@@ -1,6 +1,8 @@
 const showdown = require('showdown');
 const { firestore } = require('../config/firebase');
 const { PLATFORM_DOMAIN } = require('../config/app');
+const fs = require('fs');
+const path = require('path');
 
 const converter = new showdown.Converter();
 
@@ -11,6 +13,17 @@ async function renderPublicBlog(req, res) {
   const platformDomain = PLATFORM_DOMAIN;
 
   try {
+    // Attempt to inline the frontend CSS so the public HTML matches the SPA styles.
+    let inlineCss = '';
+    try {
+      const stylePath = path.resolve(__dirname, '..', '..', 'blog-platform-frontend', 'src', 'style.css');
+      if (fs.existsSync(stylePath)) {
+        inlineCss = fs.readFileSync(stylePath, 'utf8');
+      }
+    } catch (e) {
+      // ignore; we'll fall back to minimal styles below
+      inlineCss = '';
+    }
     const blogsRef = firestore.collection('blogs');
     let blogSnapshot;
 
@@ -79,7 +92,7 @@ async function renderPublicBlog(req, res) {
         <meta charset="UTF-8">
         <title>${blogData.title}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
+        ${inlineCss ? `<style>${inlineCss}</style>` : `<style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 800px; margin: auto; padding: 20px; line-height: 1.6; color: #333; }
           h1, h2, h3 { line-height: 1.2; }
           article.post-container { border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 40px; }
@@ -93,7 +106,7 @@ async function renderPublicBlog(req, res) {
           .comment p { margin: 0; }
           .comment-form input, .comment-form textarea, .comment-form button { width: 100%; box-sizing: border-box; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; }
           .comment-form button { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
-        </style>
+        </style>`}
       </head>
       <body>
         <header>

@@ -141,6 +141,13 @@ async function copy(text) {
     try { await navigator.clipboard.writeText(text || ''); } catch {}
 }
 
+async function send(){
+  const text = input.value.trim();
+  if (!text || busy.value) return;
+  await callAI(text);
+  input.value = '';
+}
+
 </script>
 
 <style scoped>

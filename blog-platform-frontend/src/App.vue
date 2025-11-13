@@ -19,7 +19,6 @@ const route = useRoute()
 // Don't show NavBar on auth pages or the public Landing page
 const showNav = computed(() => !['Login', 'Signup', 'Landing'].includes(route.name))
 
-// Theme is initialized in main.js from localStorage; default is light
 onMounted(() => {
   // no-op: keep hook for potential future side effects
 })

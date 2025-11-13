@@ -11,10 +11,16 @@
         </div>
         <p v-if="uploadMessage" :style="{ color: uploadError ? 'red' : 'green' }">{{ uploadMessage }}</p>
 
-        <label for="media-upload-btn" class="file-upload-label">Thêm Ảnh</label>
+        <label for="media-upload-btn" class="file-upload-btn">
+          <Icon name="image" :size="16" />
+          <span>Thêm Ảnh</span>
+        </label>
   <input type="file" @change="handleFileSelect" accept="image/*" multiple ref="fileInputRef" id="media-upload-btn" style="display: none;">
 
-        <button class="ui-btn ghost small mb-2" @click="toggleAi" style="margin-left:8px">Trợ lý AI</button>
+        <button class="file-upload-btn ghost-btn mb-2" @click="toggleAi" style="margin-left:8px">
+          <Icon name="bot" :size="16" />
+          <span>Trợ lý AI</span>
+        </button>
 
         <input v-model="post.title" type="text" placeholder="Tiêu đề bài viết" class="ui-input title-input" ref="titleInputRef">
 
@@ -103,15 +109,22 @@
 
         <!-- Edit modal -->
         <div v-if="showEdit" class="modal-backdrop" @click.self="closeEdit">
-          <div class="modal-card ui-card modal-flex">
+          <div class="modal-card ui-card modal-flex" :class="{ 'with-ai': aiEditOpen }">
             <!-- Sticky toolbar on top -->
             <div class="modal-toolbar">
               <div class="toolbar-left">
                 <h5 class="mb-0">Chỉnh sửa bài viết</h5>
               </div>
               <div class="toolbar-actions d-flex gap-2">
-                <button class="ui-btn primary" type="button" @click="triggerEditUpload">Thêm Ảnh</button>
+                <button class="file-upload-btn" type="button" @click="triggerEditUpload">
+                  <Icon name="image" :size="16" />
+                  <span>Thêm Ảnh</span>
+                </button>
                 <input type="file" @change="handleEditFileSelect" accept="image/*" multiple ref="fileEditInputRef" id="media-edit-upload-btn" style="display: none;">
+                <button class="file-upload-btn ghost-btn" type="button" @click="aiEditOpen = true">
+                  <Icon name="bot" :size="16" />
+                  <span>Trợ lý AI</span>
+                </button>
                 <button class="ui-btn primary" :disabled="isUpdating" @click="handleUpdatePost">{{ isUpdating ? 'Đang lưu...' : 'Lưu thay đổi' }}</button>
                 <button class="ui-btn ghost" @click="closeEdit">Đóng</button>
               </div>
@@ -149,6 +162,13 @@
           </div>
         </div>
       </section>
+      <AiAssistant
+        :open="aiEditOpen"
+        :title="editingPost.title"
+        :content="editingPost.content"
+        @close="aiEditOpen=false"
+        @insert="insertFromAiEdit"
+      />
     </div>
   </div>
 </template>
@@ -186,6 +206,7 @@ const showEdit = ref(false);
 const isUpdating = ref(false);
 const editingPost = reactive({ id: '', title: '', content: '' });
 const aiOpen = ref(false);
+const aiEditOpen = ref(false);
 
 // List controls
 const searchQuery = ref('');
@@ -402,29 +423,36 @@ const closeComposer = () => {
 
 const toggleAi = () => { aiOpen.value = !aiOpen.value; };
 const insertFromAi = (plainText) => {
-  if (!plainText || !editorRef.value) return;
-  const htmlToInsert = plainText
-    .split('\n') // Tách mỗi dòng thành một phần tử mảng
-    .map(line => line.trim()) // Xóa khoảng trắng thừa
-    .filter(line => line.length > 0) // Bỏ các dòng trống
-    .map(line => `<p>${line}</p>`) // Bọc mỗi dòng trong thẻ <p>
-    .join(''); // Nối tất cả lại
-
-  // 2. Chèn HTML đã được định dạng vào trình soạn thảo RichEditor (Quill)
-  const quill = editorRef.value?.getQuill(); // Lấy instance Quill (từ RichEditor.vue)
-  
-  if (quill) {
-      // Chèn vào vị trí con trỏ hiện tại
-      quill.clipboard.dangerouslyPasteHTML(quill.getSelection(true).index, htmlToInsert);
-  } else {
-      console.error("Không tìm thấy trình soạn thảo Quill! Sửa RichEditor.vue để expose getQuill().");
-      // Fallback (chỉ dùng khi lỗi)
-      post.content = (post.content || '') + htmlToInsert;
-  }
-  
-  // 3. Đóng trợ lý (Tùy chọn)
+  insertPlainTextFromAi(plainText, editorRef, post, 'content');
   aiOpen.value = false;
 };
+
+const insertFromAiEdit = (plainText) => {
+  insertPlainTextFromAi(plainText, editorEditRef, editingPost, 'content');
+  aiEditOpen.value = false;
+};
+
+function insertPlainTextFromAi(plainText, targetEditorRef, targetObject, field) {
+  if (!plainText) return;
+  const htmlToInsert = plainText
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => `<p>${line}</p>`)
+    .join('');
+
+  const editorInstance = targetEditorRef?.value;
+  const quill = editorInstance?.getQuill?.();
+  if (quill) {
+    const selection = quill.getSelection(true) || { index: quill.getLength() };
+    quill.clipboard.dangerouslyPasteHTML(selection.index, htmlToInsert);
+    return;
+  }
+
+  if (targetObject && field) {
+    targetObject[field] = (targetObject[field] || '') + htmlToInsert;
+  }
+}
 
 // Mở composer khi Dashboard phát signal
 watch(() => props.openComposerSignal, () => {
@@ -432,10 +460,23 @@ watch(() => props.openComposerSignal, () => {
 });
 
 // Helpers
+// Convert HTML (including entities like &nbsp;) to plain text
+const htmlToPlainTextLocal = (html = '') => {
+  if (!html) return '';
+  // Use DOMParser in browser to decode entities and strip tags reliably
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    // textContent will decode entities and remove tags
+    return (doc.documentElement.textContent || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+  } catch (e) {
+    // Fallback: basic replacements
+    return (html || '').replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+}
+
 const getExcerpt = (html, max = 120) => {
-  if (!html) return ''
-  const text = html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
-  return text.length > max ? text.slice(0, max) + '…' : text
+  const text = htmlToPlainTextLocal(html);
+  return text.length > max ? text.slice(0, max) + '…' : text;
 }
 
 const getThumbnail = (html) => {
@@ -547,6 +588,7 @@ const openEdit = (p) => {
   editingPost.title = p.title;
   editingPost.content = p.content;
   showEdit.value = true;
+  aiEditOpen.value = false;
   nextTick(() => {
     try { editorEditRef.value?.focus?.(); } catch {}
   });
@@ -556,6 +598,7 @@ const closeEdit = () => {
   editingPost.id = '';
   editingPost.title = '';
   editingPost.content = '';
+  aiEditOpen.value = false;
 };
 
 const handleUpdatePost = async () => {
@@ -593,16 +636,33 @@ const handleUpdatePost = async () => {
 
 /* Style cho nút upload file giả */
 /* maintain legacy composer upload button style */
-.file-upload-label {
-  display: inline-block;
-  padding: 8px 12px;
-  background-color: var(--brand-600);
-  color: white;
-  border-radius: 8px;
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  margin-bottom: 15px;
+  transition: transform .12s ease, box-shadow .18s ease;
 }
-.file-upload-label:hover { filter: brightness(1.03); }
+.file-upload-btn .icon { color: inherit; }
+.file-upload-btn:hover { transform: translateY(-1px); }
+.file-upload-btn:active { transform: translateY(0); }
+.file-upload-btn:not(.ghost-btn) {
+  background-color: var(--brand-600);
+  color: #fff;
+  border: none;
+  box-shadow: 0 12px 32px -20px rgba(99, 102, 241, 0.6);
+}
+.file-upload-btn:not(.ghost-btn):hover { filter: brightness(1.05); }
+.ghost-btn {
+  background: white;
+  color: var(--brand-700);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.ghost-btn:hover { box-shadow: 0 12px 28px -18px rgba(99, 102, 241, 0.22); }
 
 /* Danh sách bài viết dạng compact có thumbnail */
 .list-compact { list-style: none; margin: 0; padding: 0; }
@@ -650,13 +710,22 @@ const handleUpdatePost = async () => {
   .post-excerpt { font-size: 13px; }
 }
 
+@media (max-width: 1024px) {
+  .modal-flex.with-ai { margin-right: clamp(0px, 100vw - 720px, 240px); }
+}
+
+@media (max-width: 880px) {
+  .modal-flex.with-ai { margin-right: 0; }
+}
+
 /* No special responsive rules needed for stacked layout */
 
 /* Modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(2,6,23,.5); display: grid; place-items: center; padding: 16px; z-index: 1050; }
 .modal-card { max-width: 900px; width: 100%; max-height: 80vh; overflow: auto; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); }
 /* Flex modal to separate header (sticky) and scroll body */
-.modal-flex { display: flex; flex-direction: column; padding: 0; }
+.modal-flex { display: flex; flex-direction: column; padding: 0; transition: margin-right .25s ease; }
+.modal-flex.with-ai { margin-right: min(360px, 32vw); }
 .modal-toolbar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: linear-gradient(90deg,#f8fafc,#f1f5f9); border-bottom: 1px solid var(--border); border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); backdrop-filter: blur(4px); }
 .modal-toolbar h5 { font-size: 15px; font-weight: 700; }
 .modal-body { padding: 16px; overflow-y: auto; max-height: calc(80vh - 64px); display: flex; flex-direction: column; gap: 14px; }

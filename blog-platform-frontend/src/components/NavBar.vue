@@ -10,10 +10,6 @@
       </div>
 
       <div class="d-flex align-items-center gap-2 ms-auto">
-        <button class="ui-btn ghost" @click="toggleTheme" :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'">
-          <Icon :name="isDark ? 'moon' : 'sun'" :size="18" />
-        </button>
-
         <!-- User menu -->
         <div class="user-menu" ref="menuRef">
           <button class="ui-btn ghost" @click="toggleMenu" :aria-expanded="open" aria-haspopup="menu">
@@ -34,7 +30,6 @@
 </template>
 
 <script setup>
-import Icon from './Icon.vue'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '../services/firebase'
@@ -43,20 +38,9 @@ import api from '../services/api'
 const router = useRouter()
 const userEmail = computed(() => auth.currentUser?.email || '')
 
-const isDark = ref(false)
 const open = ref(false)
 const isDeleting = ref(false)
 const menuRef = ref(null)
-
-onMounted(() => {
-  isDark.value = document.body.classList.contains('theme-dark')
-})
-
-const toggleTheme = () => {
-  const nowDark = document.body.classList.toggle('theme-dark')
-  isDark.value = nowDark
-  try { localStorage.setItem('theme', nowDark ? 'dark' : 'light') } catch {}
-}
 
 const handleLogout = async () => {
   try {

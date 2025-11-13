@@ -53,8 +53,10 @@ export async function getAnalyticsSeries(blogId, metric = 'views', from, to) {
     return data;
 }
 
-export async function getTopPosts(blogId, limit = 10, from, to) {
-    const { data } = await api.get(`/api/analytics/blog/${blogId}/top-posts`, { params: { limit, from, to } });
+export async function getTopPosts(blogId, limit = 10, from, to, metric) {
+    const params = { limit, from, to };
+    if (metric) params.metric = metric;
+    const { data } = await api.get(`/api/analytics/blog/${blogId}/top-posts`, { params });
     return data;
 }
 
