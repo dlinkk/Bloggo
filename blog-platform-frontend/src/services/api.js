@@ -2,8 +2,8 @@ import axios from "axios";
 import { auth } from "./firebase";
 
 // URL duy nhất cho TOÀN BỘ backend (bao gồm cả AI)
-// const CLOUD_RUN_BACKEND_URL = 'https://blog-platform-service-761097071235.us-central1.run.app';
-const CLOUD_RUN_BACKEND_URL = "http://localhost:8080"; // Dùng URL này khi test local
+const CLOUD_RUN_BACKEND_URL = 'https://blog-platform-service-761097071235.us-central1.run.app';
+// const CLOUD_RUN_BACKEND_URL = "http://localhost:8080"; // Dùng URL này khi test local
 
 const api = axios.create({
     baseURL: CLOUD_RUN_BACKEND_URL,
