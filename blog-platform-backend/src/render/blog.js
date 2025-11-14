@@ -684,7 +684,7 @@ async function renderPublicBlog(req, res) {
                   const newCommentDiv = document.createElement('div');
                   newCommentDiv.className = 'comment';
                   const safeNickname = escapeHtml(newComment.nickname || 'Bạn đọc');
-                  const safeText = escapeHtml(newComment.text || '').replace(/\n/g, '<br>');
+                  const safeText = escapeHtml(newComment.text || '').replace(/\\n/g, '<br>');
                   newCommentDiv.innerHTML = '<div class="comment-author">' + safeNickname + '</div><div class="comment-body">' + safeText + '</div>';
                   list.appendChild(newCommentDiv);
                 }
