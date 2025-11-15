@@ -107,10 +107,9 @@ const handleSignup = async () => {
     // 6. Đăng xuất và hiển thị thông báo thành công
     await auth.signOut();
     isError.value = false;
-    message.value = 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.';
+    message.value = 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.(Nếu không thấy, hãy kiểm tra trong mục Spam)';
     
   } catch (error) {
-    // Xử lý lỗi một cách chi tiết hơn
     if (error.code === 'auth/email-already-in-use') {
         message.value = 'Email này đã được đăng ký. Vui lòng sử dụng email khác.';
     } else if (error.code === 'auth/weak-password') {
