@@ -209,15 +209,6 @@ async function renderPublicBlog(req, res) {
           0 26px 40px -34px rgba(236, 72, 153, 0.32);
       }
 
-      .post-card::before {
-        content: "";
-        position: absolute;
-        inset: -60% 40% 60% -40%;
-        background: linear-gradient(120deg, rgba(167, 139, 250, 0.18), rgba(244, 114, 182, 0.14));
-        transform: rotate(6deg);
-        z-index: -1;
-      }
-
       .post-header {
         display: flex;
         flex-direction: column;
@@ -463,22 +454,22 @@ async function renderPublicBlog(req, res) {
 
       .comment-form button {
         justify-self: start;
-        padding: 12px 22px;
-        border-radius: 14px;
+        padding: 12px 24px;
+        border-radius: 16px;
         border: none;
-        background: linear-gradient(135deg, #818cf8, #4f46e5);
+        background: linear-gradient(135deg, #f472b6, #a855f7);
         color: #fff;
         font-weight: 600;
         letter-spacing: 0.01em;
         cursor: pointer;
         transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;
-        box-shadow: 0 18px 35px -24px rgba(79, 70, 229, 0.55);
+        box-shadow: 0 18px 34px -22px rgba(168, 85, 247, 0.55);
       }
 
       .comment-form button:hover {
         transform: translateY(-2px);
-        filter: brightness(1.05);
-        box-shadow: 0 22px 40px -28px rgba(79, 70, 229, 0.62);
+        filter: brightness(1.06);
+        box-shadow: 0 22px 42px -28px rgba(244, 114, 182, 0.6);
       }
 
       .comment-form button:disabled {
@@ -617,7 +608,6 @@ async function renderPublicBlog(req, res) {
       <body>
         <div class="blog-shell">
           <header class="blog-header">
-            <span class="header-pill">Blog được xây dựng với Bloggo</span>
             <h1 class="blog-title">${blogTitle}</h1>
               <p class="owner-line">Chủ sở hữu: <strong>${safeOwner}</strong></p>
             <div class="meta-strip">
