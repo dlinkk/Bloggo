@@ -749,7 +749,7 @@ async function renderPublicBlog(req, res) {
             }
           });
         </script>
-        </script>
+        <script>
           (function(){
             try {
               var blogId = '${blog.id}'; // inline from server
@@ -789,8 +789,7 @@ async function renderPublicBlog(req, res) {
               });
             } catch (e) { /* ignore tracking errors */ }
           })();
-        <script>
-         
+        </script>
       </body>
       </html>
     `;
