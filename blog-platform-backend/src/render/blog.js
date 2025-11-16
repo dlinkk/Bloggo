@@ -749,7 +749,8 @@ async function renderPublicBlog(req, res) {
             }
           });
         </script>
-(function(){
+        </script>
+          (function(){
             try {
               var blogId = '${blog.id}'; // inline from server
               var storageKey = 'bloggo_visitorId';
@@ -789,8 +790,7 @@ async function renderPublicBlog(req, res) {
             } catch (e) { /* ignore tracking errors */ }
           })();
         <script>
-          // Basic analytics tracker (giữ nguyên)
-        </script>
+         
       </body>
       </html>
     `;
