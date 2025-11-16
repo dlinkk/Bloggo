@@ -6,6 +6,7 @@ const path = require('path');
 
 const converter = new showdown.Converter();
 
+// --- CÁC HÀM HỖ TRỢ (GIỮ NGUYÊN) ---
 const toDate = (value) => {
   if (!value) return null;
   if (typeof value.toDate === 'function') return value.toDate();
@@ -30,15 +31,15 @@ const formatLongDate = (value) => {
   }).format(date);
 };
 
-const generateSnippet = (htmlContent, maxLength = 200) => {
+const generateSnippet = (htmlContent, maxLength = 300) => {
   if (!htmlContent) return '';
-  // Xóa tag HTML để lấy text thuần
   const plainText = htmlContent.replace(/<[^>]+>/g, ' ');
-  // Rút gọn, xóa khoảng trắng thừa và thêm dấu ...
   const snippet = plainText.replace(/\s+/g, ' ').trim();
   if (snippet.length <= maxLength) return snippet;
   return snippet.substring(0, snippet.lastIndexOf(' ', maxLength)) + '...';
 };
+
+// --- HÀM RENDER CHÍNH (ĐÃ SỬA ĐỔI) ---
 async function renderPublicBlog(req, res) {
   if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
 
@@ -46,17 +47,14 @@ async function renderPublicBlog(req, res) {
   const platformDomain = PLATFORM_DOMAIN;
 
   try {
-    // Attempt to inline the frontend CSS so the public HTML matches the SPA styles.
     let baseCss = '';
     try {
       const stylePath = path.resolve(__dirname, '..', '..', 'blog-platform-frontend', 'src', 'style.css');
       if (fs.existsSync(stylePath)) {
         baseCss = fs.readFileSync(stylePath, 'utf8');
       }
-    } catch (e) {
-      // ignore; we'll fall back to minimal styles below
-      baseCss = '';
-    }
+    } catch (e) { baseCss = ''; }
+
     const blogsRef = firestore.collection('blogs');
     let blogSnapshot;
 
@@ -85,6 +83,8 @@ async function renderPublicBlog(req, res) {
     const blogTitle = escapeHtml(blogData.title || 'Blog không tên');
     const safeOwner = escapeHtml(ownerDisplayName);
     const blogCreatedAt = formatLongDate(blogData.createdAt);
+
+    // --- BỔ SUNG CSS CHO CÁC NÚT MỚI ---
     const publicThemeCss = `
       :root {
         color-scheme: light;
@@ -533,6 +533,24 @@ async function renderPublicBlog(req, res) {
           justify-content: center;
         }
       }
+      
+      .read-more-button, .collapse-button {
+        padding: 12px 22px;
+        border-radius: 999px;
+        border: 1px solid #cbd5e1;
+        background: rgba(248, 250, 252, 0.9);
+        color: #334155;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-right: 16px;
+      }
+
+      .read-more-button:hover, .collapse-button:hover {
+        background: rgba(241, 245, 249, 1);
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+      }
     `;
 
     const inlineCss = `${baseCss}\n${publicThemeCss}`.trim();
@@ -558,7 +576,7 @@ async function renderPublicBlog(req, res) {
       const commentCount = approvedComments.length;
       const commentsHtml = commentCount > 0
         ? approvedComments.join('')
-        : `<div class="comment comment-empty">Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ cảm nghĩ của bạn.</div>`;
+        : `<div class="comment comment-empty">Chưa có bình luận nào.</div>`;
 
       const createdLabel = formatLongDate(postData.createdAt);
       const updatedDate = toDate(postData.updatedAt);
@@ -568,6 +586,10 @@ async function renderPublicBlog(req, res) {
       const safeTitle = escapeHtml(postData.title || 'Bài viết không tiêu đề');
       const rawContent = postData.content || '';
       const postContentHtml = rawContent.includes('<') ? rawContent : converter.makeHtml(rawContent);
+
+      // --- TẠO ĐOẠN TRÍCH NGẮN ---
+      const snippetHtml = generateSnippet(postContentHtml, 300);
+
       const metaItems = [];
       if (createdLabel) metaItems.push(`<span class="meta-item">Đăng ngày ${createdLabel}</span>`);
       if (updatedLabel) metaItems.push(`<span class="meta-item">Cập nhật ${updatedLabel}</span>`);
@@ -575,21 +597,33 @@ async function renderPublicBlog(req, res) {
       if (commentCount > 0) metaItems.push(`<span class="meta-item meta-pill" aria-label="Bình luận">💬 ${commentCount}</span>`);
       const metaHtml = metaItems.join('');
 
+      // --- CẤU TRÚC HTML MỚI CỦA BÀI VIẾT ---
       postsHtml += `
-        <article class="post-card" id="post-${postData.id}">
+        <article class="post-card" id="post-${postData.id}" data-expanded="false">
           <header class="post-header">
-            <h2 class="post-title">${safeTitle}</h2>
+            <h2 class="post-title post-toggle" style="cursor: pointer;">${safeTitle}</h2>
             ${metaHtml ? `<div class="post-meta">${metaHtml}</div>` : ''}
           </header>
-          <div class="post-body">${postContentHtml}</div>
+
+          <div class="post-body post-snippet">
+            <p>${snippetHtml}</p>
+          </div>
+
+          <div class="post-body post-body-full" style="display: none;">
+            ${postContentHtml}
+          </div>
+
           <div class="post-interactions">
-            <button class="like-button" type="button" data-blogid="${blog.id}" data-postid="${postData.id}">
+             <button class="read-more-button post-toggle" type="button">Đọc thêm</button>
+             <button class="collapse-button" type="button" style="display: none;">Thu gọn</button>
+             <button class="like-button" type="button" data-blogid="${blog.id}" data-postid="${postData.id}">
               <span class="like-icon" aria-hidden="true">❤️</span>
               <span>Yêu thích</span>
               <span class="like-count">${likeCount}</span>
             </button>
           </div>
-          <section class="comments-section">
+
+          <section class="comments-section" style="display: none;">
             <h3>Bình luận <span class="comment-count" data-comment-count="${commentCount}">${commentCount}</span></h3>
             <div class="comments-list">${commentsHtml}</div>
             <div class="comment-form">
@@ -602,7 +636,7 @@ async function renderPublicBlog(req, res) {
     }
 
     if (!postsHtml) {
-      postsHtml = `<div class="empty-state">Blog này chưa có bài viết nào được xuất bản.</div>`;
+      postsHtml = `<div class="empty-state">Blog này chưa có bài viết nào.</div>`;
     }
 
     const finalHtml = `
@@ -618,7 +652,7 @@ async function renderPublicBlog(req, res) {
         <div class="blog-shell">
           <header class="blog-header">
             <h1 class="blog-title">${blogTitle}</h1>
-              <p class="owner-line">Chủ sở hữu: <strong>${safeOwner}</strong></p>
+            <p class="owner-line">Chủ sở hữu: <strong>${safeOwner}</strong></p>
             <div class="meta-strip">
               ${blogCreatedAt ? `<span class="meta-pill">Tạo ngày ${blogCreatedAt}</span>` : ''}
               <span class="meta-pill accent">${postsSnapshot.size} bài viết</span>
@@ -627,18 +661,43 @@ async function renderPublicBlog(req, res) {
           <main class="posts-stack">${postsHtml}</main>
           <footer class="footer">© ${new Date().getFullYear()} ${blogTitle}. Vận hành bởi Bloggo.</footer>
         </div>
-
+        
         <script>
-          const escapeHtml = (value = '') => value
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+          const escapeHtml = (value = '') => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
           document.addEventListener('click', function(e) {
             var target = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
             if (!target) return;
+
+            // --- LOGIC MỚI ĐỂ MỞ/ĐÓNG BÀI VIẾT ---
+            const postToggle = target.closest ? target.closest('.post-toggle') : null;
+            if (postToggle) {
+                const card = postToggle.closest('.post-card');
+                if (card && card.getAttribute('data-expanded') === 'false') {
+                    card.querySelector('.post-snippet').style.display = 'none';
+                    card.querySelector('.post-body-full').style.display = 'block';
+                    card.querySelector('.comments-section').style.display = 'block';
+                    card.querySelector('.read-more-button').style.display = 'none';
+                    card.querySelector('.collapse-button').style.display = 'inline-flex';
+                    card.setAttribute('data-expanded', 'true');
+                }
+            }
+
+            const collapseButton = target.closest ? target.closest('.collapse-button') : null;
+            if (collapseButton) {
+                const card = collapseButton.closest('.post-card');
+                if (card && card.getAttribute('data-expanded') === 'true') {
+                    card.querySelector('.post-snippet').style.display = 'block';
+                    card.querySelector('.post-body-full').style.display = 'none';
+                    card.querySelector('.comments-section').style.display = 'none';
+                    card.querySelector('.read-more-button').style.display = 'inline-flex';
+                    card.querySelector('.collapse-button').style.display = 'none';
+                    card.setAttribute('data-expanded', 'false');
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            // --- KẾT THÚC LOGIC MỚI ---
+
             const likeButton = target.closest ? target.closest('.like-button') : null;
             if (likeButton) {
               if (likeButton.disabled) return;
@@ -646,19 +705,12 @@ async function renderPublicBlog(req, res) {
               const postId = likeButton.dataset.postid;
               const blogId = likeButton.dataset.blogid;
               const countSpan = likeButton.querySelector('.like-count');
-
-              fetch('/api/public/posts/' + postId + '/like', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ blogId })
-              })
-              .then(res => {
-                if (!res.ok) throw new Error('Like failed');
-                const current = parseInt(countSpan.textContent, 10) || 0;
-                countSpan.textContent = current + 1;
-              })
+              
+              fetch('/api/public/posts/' + postId + '/like', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ blogId }) })
+              .then(res => { if (!res.ok) throw new Error('Like failed'); const current = parseInt(countSpan.textContent, 10) || 0; countSpan.textContent = current + 1; })
               .catch(err => { console.error(err); likeButton.disabled = false; });
             }
+
             var submitButton = target.closest ? target.closest('.submit-comment-button') : null;
             if (submitButton) {
               if (submitButton.disabled) return;
@@ -669,11 +721,7 @@ async function renderPublicBlog(req, res) {
               const text = form.querySelector('.comment-input').value.trim();
               if (!nickname || !text) return alert('Vui lòng nhập tên và nội dung bình luận.');
               submitButton.disabled = true; submitButton.textContent = 'Đang gửi...';
-              fetch('/api/public/comments', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ blogId, postId, nickname, text })
-              })
+              fetch('/api/public/comments', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ blogId, postId, nickname, text }) })
               .then(res => { if (!res.ok) throw new Error('Comment failed'); return res.json(); })
               .then(newComment => {
                 const list = form.parentElement.querySelector('.comments-list');
@@ -701,9 +749,7 @@ async function renderPublicBlog(req, res) {
             }
           });
         </script>
-        <script>
-          // Basic analytics tracker: page view + engagement on unload
-          (function(){
+(function(){
             try {
               var blogId = '${blog.id}'; // inline from server
               var storageKey = 'bloggo_visitorId';
@@ -742,6 +788,8 @@ async function renderPublicBlog(req, res) {
               });
             } catch (e) { /* ignore tracking errors */ }
           })();
+        <script>
+          // Basic analytics tracker (giữ nguyên)
         </script>
       </body>
       </html>
