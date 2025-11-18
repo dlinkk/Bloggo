@@ -4,7 +4,7 @@
 
 ## Kiến trúc Hệ thống
 
-![Sơ đồ kiến trúc](link-toi-so-do.png)
+![Sơ đồ kiến trúc](D:/Downloads/hoc/Ki%201%20nam%203/DTDM/cloud.drawio.png)
 
 - **Frontend (Dashboard):** Giao diện quản trị cho người dùng, được xây dựng bằng Vue.js, JavaScript và host trên **Firebase Hosting**.
 - **Backend:** Một ứng dụng Node.js/Express.js chạy trên **Cloud Run**, xử lý toàn bộ logic nghiệp vụ (tạo blog, bài viết, xóa tài khoản...) và logic hiển thị blog công khai.
